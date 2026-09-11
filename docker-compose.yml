@@ -1,0 +1,243 @@
+# Stack completo de clave10 en un solo comando:
+#
+#   cd ~/clave10-sdk
+#   docker compose up -d
+#
+# La cadena que levanta es:
+#
+#   navegador (localhost:3000)
+#      |  soter, el front
+#      v
+#   lkf-miniback (localhost:8000)
+#      |  decide por el nombre del script
+#      |
+#      |-- *_sdk.py  --> docker exec lkf-sanic-app  (repo lkf-sanic-apps)
+#      +-- lo demas  --> docker exec lkf-addons     (repo addons)
+#
+# Este archivo es autocontenido a proposito: no hace `include` de los
+# docker-compose de cada submodulo. Cada repo conserva el suyo para trabajar
+# solo con ese servicio; aqui esta la version integrada. Si cambias un montaje
+# alla, acuerdate de reflejarlo aqui.
+#
+# Las rutas son relativas a la raiz del paraguas, o sea `./<submodulo>/...`.
+# En los compose de cada repo son `../...` porque viven en `<repo>/docker/`.
+
+name: clave10-sdk
+
+networks:
+  # Externas, igual que en los compose de origen: las comparten con el backend
+  # real cuando esta corriendo. Crearlas una vez por maquina:
+  #   docker network create -d bridge --gateway 172.23.0.1 --subnet 172.23.0.0/16 linkaform
+  #   docker network create -d bridge sanic
+  linkaform:
+    name: linkaform
+    external: true
+  sanic:
+    name: sanic
+    external: true
+
+services:
+  # ---------------------------------------------------------------------------
+  # Scripts de addons. Lo corre el mini-back por `docker exec`, no sirve HTTP:
+  # por eso `sleep infinity`.
+  # ---------------------------------------------------------------------------
+  lkf-addons:
+    restart: "no"
+    # El nombre no es cosmetico: el mini-back resuelve este destino por nombre
+    # de contenedor contra el docker.sock del host (miniback/runner.py).
+    container_name: lkf-addons
+    hostname: lkf-addons
+    image: linkaform/addons:develop
+    build:
+      context: ./addons
+      dockerfile: ./Dockerfile
+      target: develop
+    networks:
+      linkaform:
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./addons/lkf_addons:/usr/local/lib/python3.10/site-packages/lkf_addons/
+      - ./addons/lkf_addons/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py
+      - ./addons/lkf_addons/bin/download_module.py:/usr/local/bin/download_module.py
+      - ./addons/lkf_addons/bin/json_xml.py:/usr/local/bin/json_xml.py
+      - ./addons/lkf_addons/bin/xml_2_json.py:/usr/local/bin/xml_2_json.py
+      - ./addons/config:/srv/scripts/addons/config
+      - ./addons/secrets:/srv/scripts/addons/secrets
+      - ./addons/modules:/srv/scripts/addons/modules
+      - ./linkaform_api/linkaform_api:/usr/local/lib/python3.10/site-packages/linkaform_api/
+      # El repo `lkf` (infosync_scripts) no es submodulo de este paraguas. Si lo
+      # agregas, descomenta:
+      # - ./lkf/infosync_scripts/:/srv/infosync_scripts
+      - ${HOME}/.bash_lkf_history:/srv/scripts/.bash_history
+    command: sleep infinity
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # App Sanic. Esta si tiene que estar SIRVIENDO en su puerto 8000 interno: los
+  # *_sdk.py no son autonomos, le pegan por HTTP a su propio contenedor.
+  # ---------------------------------------------------------------------------
+  lkf-sanic-app:
+    restart: "no"
+    container_name: lkf-sanic-app
+    hostname: lkf-sanic-app
+    image: linkaform/sanic-app:develop
+    build:
+      context: ./lkf-sanic-apps
+      dockerfile: ./Dockerfile
+      target: develop
+    networks:
+      sanic:
+    ports:
+      - "8888:8000"
+    volumes:
+      - ./lkf-sanic-apps/addons:/usr/local/lib/python3.12/site-packages/lkf_addons/
+      - ./lkf-sanic-apps/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py
+      - ./lkf-sanic-apps/bin/download_module.py:/usr/local/bin/download_module.py
+      - ./lkf-sanic-apps/bin/json_xml.py:/usr/local/bin/json_xml.py
+      - ./lkf-sanic-apps/bin/xml_2_json.py:/usr/local/bin/xml_2_json.py
+      - ./lkf-sanic-apps/app:/srv/lkf-sanic-app/app
+      - ./lkf-sanic-apps/app/config:/srv/lkf-sanic-app/config
+      - ./lkf-sanic-apps/app/modules:/srv/lkf-sanic-app/modules
+      - ./lkf-sanic-apps/app/middleware:/srv/lkf-sanic-app/middleware
+      # current_domain y current_env los escribe ./lkf workwith|workon EN EL
+      # HOST; el contenedor solo los lee.
+      - ./lkf-sanic-apps/secrets:/srv/lkf-sanic-app/secrets:ro
+      # secrets/accounts.ini es un symlink a ../../addons/secrets/accounts.ini.
+      # Dentro del contenedor ese target resuelve a /srv/addons/secrets, asi que
+      # hay que montar ahi el directorio real o el symlink queda colgado.
+      - ./addons/secrets:/srv/addons/secrets:ro
+      - ./linkaform_api/linkaform_api:/usr/local/lib/python3.12/site-packages/linkaform_api/
+      # - ./lkf/infosync_scripts/:/srv/infosync_scripts
+      - ${HOME}/.bash_lkf_history:/srv/lkf-sanic-app/.bash_history
+      - ./lkf-sanic-apps/docker/:/docker/
+    command: "/docker/main_entrypoint.sh"
+    healthcheck:
+      # GET /health lo registra app/main.py; reporta tambien el estado de mongo.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # Mini-back: simula la parte del backend que corre scripts dentro del
+  # contenedor de la cuenta. Ver addons/miniback/README.md.
+  # ---------------------------------------------------------------------------
+  miniback:
+    restart: "no"
+    container_name: lkf-miniback
+    hostname: miniback
+    image: linkaform/miniback:develop
+    build:
+      context: ./addons/miniback
+      dockerfile: Dockerfile
+    networks:
+      linkaform:
+    ports:
+      - "${MINIBACK_PORT:-8000}:8000"
+    environment:
+      LKF_ADDONS_CONTAINER: ${LKF_ADDONS_CONTAINER:-lkf-addons}
+      LKF_MODULES_PATH: ${LKF_MODULES_PATH:-/srv/scripts/addons/modules}
+      LKF_SANIC_CONTAINER: ${LKF_SANIC_CONTAINER:-lkf-sanic-app}
+      LKF_SANIC_MODULES_PATH: ${LKF_SANIC_MODULES_PATH:-/srv/lkf-sanic-app/modules}
+      LKF_SANIC_PYTHONPATH: ${LKF_SANIC_PYTHONPATH:-/srv/lkf-sanic-app/config:/srv/lkf-sanic-app}
+      LKF_ACCOUNT_ID: ${LKF_ACCOUNT_ID:-}
+      LKF_UPSTREAM: ${LKF_UPSTREAM:-https://app.linkaform.com}
+      MINIBACK_TIMEOUT: ${MINIBACK_TIMEOUT:-120}
+      MINIBACK_INDEX_TTL: ${MINIBACK_INDEX_TTL:-30}
+      # 0 = sin tope: las peticiones del front corren en paralelo.
+      MINIBACK_MAX_CONCURRENT: ${MINIBACK_MAX_CONCURRENT:-0}
+    volumes:
+      # El docker.sock del host: es como este contenedor le hace `docker exec`
+      # a los otros dos. Equivale a acceso root al host, ver miniback/README.md.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Solo para resolver el account_id por default (current_domain +
+      # accounts.ini). Nada mas se lee de aqui.
+      - ./addons/secrets:/srv/scripts/addons/secrets:ro
+      # El codigo del mini-back en vivo, para no rebuildear en cada cambio.
+      - ./addons/miniback:/srv/miniback
+    depends_on:
+      # `service_started` a proposito, no `service_healthy`: la app Sanic
+      # conecta a mongo al arrancar y si esa dependencia falla no queremos que
+      # se caiga el stack entero. El mini-back degrada solo (503 en ese destino,
+      # ok:false en /api/health) y sigue sirviendo el otro.
+      lkf-addons:
+        condition: service_started
+      lkf-sanic-app:
+        condition: service_started
+      # Para exigir que Sanic este sirviendo antes de arrancar, cambia la linea
+      # de arriba por:  condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # Front. Sin red interna a proposito: las llamadas a NEXT_PUBLIC_API_BASE_URL
+  # salen del NAVEGADOR (src/config/api.ts, todo client-side), asi que la URL
+  # tiene que ser alcanzable desde el host, no un hostname de docker.
+  # ---------------------------------------------------------------------------
+  soter:
+    restart: "no"
+    container_name: soter
+    image: linkaform/soter:develop
+    build:
+      context: ./clave10
+      dockerfile: Dockerfile
+      target: develop
+    ports:
+      - "3000:3000"
+    environment:
+      # Se interpola con el mismo MINIBACK_PORT del mini-back para que cambiar
+      # el puerto no desincronice al front.
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${MINIBACK_PORT:-8000}/api
+      # Contra el backend real:
+      # NEXT_PUBLIC_API_BASE_URL: https://app.linkaform.com/api
+    volumes:
+      - ./clave10/src:/srv/src/
+      - ./clave10/public:/srv/public/
+      - ./clave10/cache:/srv/cache/
+      # node_modules y next.config.ts viven en la imagen (clave10/Dockerfile):
+      # tocarlos pide rebuild, no basta con reiniciar.
+    depends_on:
+      miniback:
+        condition: service_healthy
+    command: yarn dev
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # Imagenes base. Nunca arrancan (chocarian en el 5001 con lkf-addons); estan
+  # aqui solo para poder construirlas desde un lugar, porque las imagenes
+  # `develop` se construyen FROM linkaform/{addons,sanic-app}:base.
+  #
+  #   docker compose --profile base build lkf-addons-base lkf-sanic-app-base
+  # ---------------------------------------------------------------------------
+  lkf-addons-base:
+    profiles: ["base"]
+    restart: "no"
+    container_name: lkf-addons-base
+    image: linkaform/addons:base
+    build:
+      context: ./addons
+      dockerfile: ./Dockerfile
+      target: addons-base
+    command: sleep infinity
+
+  lkf-sanic-app-base:
+    profiles: ["base"]
+    restart: "no"
+    container_name: lkf-sanic-app-base
+    image: linkaform/sanic-app:base
+    build:
+      context: ./lkf-sanic-apps
+      dockerfile: ./Dockerfile
+      target: sanic-base
+    command: sleep infinity

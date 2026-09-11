@@ -1,0 +1,18 @@
+[submodule "addons"]
+	path = addons
+	url = git@github.com:linkaform/addons.git
+[submodule "clave10"]
+	path = clave10
+	url = git@github.com:linkaform/clave10.git
+[submodule "lkf-sanic-apps"]
+	path = lkf-sanic-apps
+	url = git@github.com:linkaform/lkf-sanic-apps.git
+[submodule "linkaform_api"]
+	path = linkaform_api
+	url = git@github.com:linkaform/linkaform_api.git
+[submodule "clave10-app"]
+	path = clave10-app
+	url = git@github.com:linkaform/clave10-app.git
+[submodule "lkf-claude"]
+	path = lkf-claude
+	url = git@github.com:linkaform/lkf-claude.git
