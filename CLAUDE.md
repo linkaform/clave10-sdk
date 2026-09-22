@@ -26,6 +26,17 @@ git submodule update --init --recursive
 Sin `--recursive`, `addons/modules` queda vacio, el compose lo monta igual y
 `/api/health` reporta `scripts: 0`. Es el sintoma tipico de un clon a medias.
 
+Tras un clon todos quedan en HEAD detached — es lo normal, no esta roto. Para
+dejarlos en `master` y en el ultimo commit:
+
+```bash
+git submodule foreach --recursive 'git checkout master && git pull --ff-only origin master'
+```
+
+`master` es el punto de partida: `addons/modules` tiene una rama por cuenta y
+`./lkf workwith <dominio>` la elige despues, dejando un ` M modules` esperado
+que no se commitea. El README lo detalla en su seccion "Submodulos".
+
 Cada submodulo es un repo independiente con su propia rama: un cambio se
 commitea y se pushea **en el submodulo**, y solo despues se actualiza el
 puntero aqui. Antes de pushear el paraguas, verifica que los commits que

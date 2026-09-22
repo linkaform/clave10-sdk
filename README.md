@@ -78,6 +78,41 @@ Si no las tienes localmente:
 docker compose --profile base build lkf-addons-base lkf-sanic-app-base
 ```
 
+## Submodulos
+
+Tras un clon, cada submodulo queda en **HEAD detached**. Es lo normal: el repo
+padre registra un commit exacto, no una rama, y `git submodule update` hace
+checkout de ese SHA. No esta roto.
+
+Para arrancar con todo en `master` y en el ultimo commit:
+
+```bash
+git submodule foreach --recursive 'git checkout master && git pull --ff-only origin master'
+```
+
+`--recursive` alcanza tambien los tres anidados (`addons/modules`,
+`addons/test/sdk_testing`, `lkf-sanic-apps/app/modules`). `--ff-only` hace que
+falle en vez de inventar un merge si algun submodulo divergio.
+
+Los seis del paraguas declaran `branch = master` en `.gitmodules`, asi que
+tambien sirve el atajo:
+
+```bash
+git submodule update --remote --merge
+```
+
+Ojo con la diferencia: ese trae lo ultimo pero **deja el submodulo detached**.
+El `foreach` de arriba es el que ademas lo planta en la rama.
+
+`master` es el punto de partida, no el destino: `addons/modules` tiene una
+rama por cuenta (`seguridad`, `account_29954`, ...) y `./lkf workwith <dominio>`
+la elige despues. Ahi si esperas ver ` M modules` en `git status` — es correcto
+y no se commitea.
+
+Mover un submodulo deja su puntero distinto al que registra el padre
+(` M <submodulo>`). Mientras no lo commitees aqui, el cambio vive solo en tu
+disco y el proximo clon vuelve al SHA viejo.
+
 ## Dia a dia
 
 ```bash
