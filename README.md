@@ -45,7 +45,10 @@ El front tampoco usa la red interna: sus llamadas salen del navegador, asi que
 git clone --recurse-submodules git@github.com:linkaform/clave10-sdk.git
 cd clave10-sdk
 # si ya lo clonaste sin --recurse-submodules:
-git submodule update --init
+git submodule update --init --recursive
+# --recursive no es opcional: addons trae `modules` y `test/sdk_testing`
+# como submodulos propios, y el compose monta ./addons/modules. Sin el,
+# ese directorio queda vacio y /api/health reporta scripts: 0.
 
 # redes externas, una sola vez por maquina
 docker network create -d bridge --gateway 172.23.0.1 --subnet 172.23.0.0/16 linkaform
@@ -122,13 +125,13 @@ autonomos, le pegan por HTTP a su propio contenedor.
 ## Deuda conocida
 
 - **`~/lkf` literal.** Quedaron rutas viejas que asumen que los repos viven en
-  `~/lkf`: `addons/lkf:325` y `lkf-sanic-apps/lkf:324` (`./lkf test`),
-  `addons/test/docker/docker-compose.yaml:9,32`,
-  `lkf-sanic-apps/test/docker/docker-compose.yaml:16,37` y
-  `addons/docker/docker-compose.worktree.yml:49-51`. Tras la mudanza a
-  `~/clave10-sdk` esas rutas no resuelven; el stack no las usa, pero `./lkf
-  test` y el compose de worktree si. Se arreglan con un `ln -s ~/clave10-sdk
-  ~/lkf` o parcheando esas lineas.
+  `~/lkf`: `addons/lkf:325` y `lkf-sanic-apps/lkf:324` (`./lkf test`), y
+  `addons/test/docker/docker-compose.yaml:9,32`. Tras la mudanza a
+  `~/clave10-sdk` no resuelven; el stack no las usa, pero `./lkf test` si. Se
+  arreglan con un `ln -s ~/clave10-sdk ~/lkf` o parcheando esas lineas.
+  `addons/docker/docker-compose.worktree.yml` ya no esta en la lista: ahora
+  toma `linkaform_api` de `LKF_API` — la misma variable del resolver de
+  `lkf-claude` — y solo cae a `~/lkf` como default.
 - **`infosync_scripts` sin montar.** Los compose de origen montan
   `../../lkf/infosync_scripts` en `/srv/infosync_scripts`, de un repo `lkf` que
   no esta como submodulo. Hoy eso solo creaba un directorio vacio. Las lineas
