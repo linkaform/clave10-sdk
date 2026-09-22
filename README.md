@@ -177,7 +177,8 @@ autonomos, le pegan por HTTP a su propio contenedor.
   `../../lkf/infosync_scripts` en `/srv/infosync_scripts`, de un repo `lkf` que
   no esta como submodulo. Hoy eso solo creaba un directorio vacio. Las lineas
   quedaron comentadas en el compose por si aparece el repo.
-- **Config del front congelada en la imagen.** `clave10/Dockerfile:15-16` copia
-  `package.json` y `*.config.*` en build time y `yarn.lock` no entra en el glob
-  (`*.json`). Cambiar `next.config.ts`, dependencias o el lockfile pide
-  `docker compose build soter`, no basta reiniciar.
+- **Config del front congelada en la imagen.** `clave10/Dockerfile:28-29` copia
+  `tsconfig.json` y los `*.config.*` en build time, y el compose solo monta
+  `src/`, `public/` y `cache/`. Tocar `next.config.ts`, `tailwind.config.ts` o
+  las dependencias pide `docker compose build soter`; no basta reiniciar. El
+  rebuild es barato: `yarn install` corre en una capa anterior y se reusa.

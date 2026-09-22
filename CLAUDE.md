@@ -103,9 +103,10 @@ Instalarlo o no es decision de cada quien: Claude Code lo guarda en tu
   `ln -s ~/clave10-sdk ~/lkf`.
 - **`infosync_scripts` sin montar.** Viene del repo `lkf`, que no es submodulo
   de aqui. Las lineas quedaron comentadas en el compose.
-- **Config del front congelada en la imagen.** `clave10/Dockerfile:15-16` copia
-  `package.json` y `*.config.*` en build time, y `yarn.lock` no entra en el
-  glob. Tocar `next.config.ts`, dependencias o el lockfile pide
-  `docker compose build soter`; no basta reiniciar.
+- **Config del front congelada en la imagen.** `clave10/Dockerfile:28-29` copia
+  `tsconfig.json` y los `*.config.*` en build time, y el compose solo monta
+  `src/`, `public/` y `cache/`. Tocar `next.config.ts`, `tailwind.config.ts` o
+  las dependencias pide `docker compose build soter`; no basta reiniciar. El
+  rebuild es barato: `yarn install` corre en una capa anterior y se reusa.
 - **`scripts: 0` en `/api/health`** significa que el montaje de `modules` de
   ese contenedor quedo mal — casi siempre, submodulos sin `--recursive`.
