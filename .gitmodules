@@ -1,18 +1,24 @@
 [submodule "addons"]
 	path = addons
 	url = git@github.com:linkaform/addons.git
+	branch = master
 [submodule "clave10"]
 	path = clave10
 	url = git@github.com:linkaform/clave10.git
+	branch = master
 [submodule "lkf-sanic-apps"]
 	path = lkf-sanic-apps
 	url = git@github.com:linkaform/lkf-sanic-apps.git
+	branch = master
 [submodule "linkaform_api"]
 	path = linkaform_api
 	url = git@github.com:linkaform/linkaform_api.git
+	branch = master
 [submodule "clave10-app"]
 	path = clave10-app
 	url = git@github.com:linkaform/clave10-app.git
+	branch = master
 [submodule "lkf-claude"]
 	path = lkf-claude
 	url = git@github.com:linkaform/lkf-claude.git
+	branch = master
