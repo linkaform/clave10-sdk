@@ -47,7 +47,11 @@ curl -s localhost:8888/health       # {"status": "ok", ...}
 ```
 
 Antes del primer `up` hacen falta las dos redes externas y los secrets de
-`addons/`. El README tiene la secuencia completa.
+`addons/`, que **no viajan en el clon** (estan en .gitignore) y se crean a
+mano en cada maquina: `secrets/accounts.ini` y `config/local_settings.py`.
+Este ultimo no tiene plantilla y lleva credenciales reales, asi que se pide al
+equipo; sin el, `config/settings.py` imprime `local_settings... NOT FOUND!!!`
+y el contenedor arranca sin servir scripts. El README tiene la secuencia.
 
 | Servicio        | Host | Contenedor |
 | --------------- | ---- | ---------- |

@@ -56,8 +56,14 @@ docker network create -d bridge sanic
 
 cp .env.example .env        # opcional, todo tiene default
 
-# secrets, antes del primer up
-#   addons/secrets/accounts.ini   (ver addons/secrets/README.md)
+# secrets, antes del primer up. NINGUNO viaja en el clon: estan en .gitignore
+# y hay que crearlos a mano en cada maquina.
+#   addons/secrets/accounts.ini        <- desde secrets/accounts.ini.example
+#   addons/config/local_settings.py    <- no tiene plantilla; pidesela a alguien
+#                                         del equipo. Lee accounts.ini y arma
+#                                         `config`; sin el, config/settings.py
+#                                         imprime "local_settings... NOT FOUND!!!"
+#                                         y el contenedor no sirve scripts.
 cd addons && ./lkf workon local && ./lkf workwith <dominio> && cd ..
 #   escriben current_env y current_domain EN EL HOST y mueven la rama de
 #   modules/. lkf-sanic-apps los toma por el symlink de accounts.ini.
