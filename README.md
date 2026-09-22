@@ -45,7 +45,7 @@ El front tampoco usa la red interna: sus llamadas salen del navegador, asi que
 git clone --recurse-submodules git@github.com:linkaform/clave10-sdk.git
 cd clave10-sdk
 # si ya lo clonaste sin --recurse-submodules:
-git submodule update --init --recursive
+git submodule foreach --recursive 'git checkout master && git pull --ff-only origin master'
 # --recursive no es opcional: addons trae `modules` y `test/sdk_testing`
 # como submodulos propios, y el compose monta ./addons/modules. Sin el,
 # ese directorio queda vacio y /api/health reporta scripts: 0.
