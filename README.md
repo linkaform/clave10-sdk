@@ -8,7 +8,7 @@ clave10-sdk/
   docker-compose.yml   <- el stack completo
   addons/              <- scripts de addons + el mini-back
   lkf-sanic-apps/      <- app Sanic, destino de los *_sdk.py
-  clave10/             <- el front (servicio "soter")
+  clave10/             <- el front (servicio "clave10")
   linkaform_api/       <- libreria, se monta dentro de los dos backends
   clave10-app/         <- app movil
   lkf-claude/          <- tooling
@@ -23,7 +23,7 @@ aqui tambien.
 
 ```
 navegador (localhost:3000)
-   |  soter, el front
+   |  clave10, el front
    v
 lkf-miniback (localhost:8000)
    |  decide por el nombre del script
@@ -162,7 +162,7 @@ docker compose exec lkf-sanic-app bash
 
 | Servicio        | Host   | Contenedor |
 | --------------- | ------ | ---------- |
-| `soter`         | 3000   | 3000       |
+| `clave10`       | 3000   | 3000       |
 | `lkf-miniback`  | 8000   | 8000       |
 | `lkf-sanic-app` | 8888   | 8000       |
 | `lkf-addons`    | 5001   | 5000       |
@@ -171,7 +171,7 @@ docker compose exec lkf-sanic-app bash
 
 ## Orden de arranque
 
-`soter` espera a que `lkf-miniback` este *healthy*; el mini-back espera a que
+`clave10` espera a que `lkf-miniback` este *healthy*; el mini-back espera a que
 los dos backends esten *started* (no *healthy*) a proposito: la app Sanic
 conecta a mongo al arrancar, y si esa dependencia falla no queremos que se
 caiga el stack entero. El mini-back degrada solo — 503 en ese destino,
@@ -199,5 +199,5 @@ autonomos, le pegan por HTTP a su propio contenedor.
 - **Config del front congelada en la imagen.** `clave10/Dockerfile:28-29` copia
   `tsconfig.json` y los `*.config.*` en build time, y el compose solo monta
   `src/`, `public/` y `cache/`. Tocar `next.config.ts`, `tailwind.config.ts` o
-  las dependencias pide `docker compose build soter`; no basta reiniciar. El
+  las dependencias pide `docker compose build clave10`; no basta reiniciar. El
   rebuild es barato: `yarn install` corre en una capa anterior y se reusa.

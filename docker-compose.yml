@@ -6,7 +6,7 @@
 # La cadena que levanta es:
 #
 #   navegador (localhost:3000)
-#      |  soter, el front
+#      |  clave10, el front
 #      v
 #   lkf-miniback (localhost:8000)
 #      |  decide por el nombre del script
@@ -184,10 +184,10 @@ services:
   # salen del NAVEGADOR (src/config/api.ts, todo client-side), asi que la URL
   # tiene que ser alcanzable desde el host, no un hostname de docker.
   # ---------------------------------------------------------------------------
-  soter:
+  clave10:
     restart: "no"
-    container_name: soter
-    image: linkaform/soter:develop
+    container_name: clave10
+    image: linkaform/clave10:develop
     build:
       context: ./clave10
       dockerfile: Dockerfile

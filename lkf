@@ -77,7 +77,7 @@ _start(){
   curl -s "localhost:8888/health" || echo "  (sin respuesta todavia)"
   echo
   echo
-  echo "  soter (front) http://localhost:3000"
+  echo "  clave10 (front) http://localhost:3000"
   echo
   echo "Si algo no responde: docker compose -f \"$Repo_root/docker-compose.yml\" logs -f <servicio>"
 }
@@ -87,7 +87,7 @@ _stop(){
   # son fijos (el mini-back les habla por nombre via docker exec, ver CLAUDE.md), asi
   # que pararlos y quitarlos por nombre es mas directo y es lo mismo que ya hacen
   # addons/lkf y lkf-sanic-apps/lkf para su propio contenedor.
-  local containers=(soter lkf-miniback lkf-sanic-app lkf-addons)
+  local containers=(clave10 lkf-miniback lkf-sanic-app lkf-addons)
   local alguno=0
   for c in "${containers[@]}"; do
     if docker inspect --type=container "$c" >/dev/null 2>&1; then

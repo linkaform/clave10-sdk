@@ -8,7 +8,7 @@ clave10-sdk/
   docker-compose.yml   <- el stack completo, autocontenido
   addons/              <- scripts de addons + el mini-back   (submodulos propios)
   lkf-sanic-apps/      <- app Sanic, destino de los *_sdk.py
-  clave10/             <- el front (servicio "soter")
+  clave10/             <- el front (servicio "clave10")
   linkaform_api/       <- libreria, se monta dentro de los dos backends
   clave10-app/         <- app movil (no participa en el compose)
   lkf-claude/          <- tooling: plugin de Claude Code
@@ -66,7 +66,7 @@ y el contenedor arranca sin servir scripts. El README tiene la secuencia.
 
 | Servicio        | Host | Contenedor |
 | --------------- | ---- | ---------- |
-| `soter`         | 3000 | 3000       |
+| `clave10`       | 3000 | 3000       |
 | `lkf-miniback`  | 8000 | 8000       |
 | `lkf-sanic-app` | 8888 | 8000       |
 | `lkf-addons`    | 5001 | 5000       |
@@ -106,7 +106,7 @@ Instalarlo o no es decision de cada quien: Claude Code lo guarda en tu
 - **Config del front congelada en la imagen.** `clave10/Dockerfile:28-29` copia
   `tsconfig.json` y los `*.config.*` en build time, y el compose solo monta
   `src/`, `public/` y `cache/`. Tocar `next.config.ts`, `tailwind.config.ts` o
-  las dependencias pide `docker compose build soter`; no basta reiniciar. El
+  las dependencias pide `docker compose build clave10`; no basta reiniciar. El
   rebuild es barato: `yarn install` corre en una capa anterior y se reusa.
 - **`scripts: 0` en `/api/health`** significa que el montaje de `modules` de
   ese contenedor quedo mal — casi siempre, submodulos sin `--recursive`.
