@@ -55,7 +55,14 @@ docker network create -d bridge --gateway 172.23.0.1 --subnet 172.23.0.0/16 link
 docker network create -d bridge sanic
 
 cp .env.example .env        # opcional, todo tiene default
+```
 
+## Secrets & Local Settings
+```bash
+
+# Estos archivos debes pedirselos a alguien del equipo
+
+# ADDONS
 # secrets, antes del primer up. NINGUNO viaja en el clon: estan en .gitignore
 # y hay que crearlos a mano en cada maquina.
 #   addons/secrets/accounts.ini        <- desde secrets/accounts.ini.example
@@ -64,7 +71,19 @@ cp .env.example .env        # opcional, todo tiene default
 #                                         `config`; sin el, config/settings.py
 #                                         imprime "local_settings... NOT FOUND!!!"
 #                                         y el contenedor no sirve scripts.
+
+# LKF-SANIC-APPS
+# Creamos una liga simbolica para compartir los secrets de accoutns
+cd lkf-sanic-apps/secrets/ && ln -s ../../addons/secrets/accounts.ini ./ && cd ../..
+
+#  lkf-sanic-apps/secrets/accounts.ini <- una liga simbolica a addons/secrets/accounts.ini
+#                                         puede funcionar de manera independientes, pero es 
+#                                         mas sencillo tener un solo archivo
+#  lkf-sanci-apps/app/config/local_settings.py <- no tiene plantilla; pidesela a alguien del equipo
+#
+# Para correr en un ambiente con una cuetna ejecuta
 cd addons && ./lkf workon local && ./lkf workwith <dominio> && cd ..
+cd lkf-sanic-apps && ./lkf workon prod && ./lkf workwith seguridad && cd ..
 #   escriben current_env y current_domain EN EL HOST y mueven la rama de
 #   modules/. lkf-sanic-apps los toma por el symlink de accounts.ini.
 

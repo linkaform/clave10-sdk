@@ -1,0 +1,147 @@
+#!/bin/bash
+
+set -e
+set -u
+
+# Este lkf es un orquestador, a proposito no hace nada por si mismo: workwith y workon
+# de verdad viven en addons/lkf y lkf-sanic-apps/lkf, cada uno moviendo su propio
+# submodulo (modules/ y app/modules). Aqui solo se llaman a los dos en el orden
+# correcto para no tener que acordarse de hacerlo dos veces.
+
+_usage(){
+  APP=$(basename "$0")
+      echo
+      echo "Usage: $APP <start|stop|workwith|workon> [args]"
+      echo
+      echo "    $APP start                        Levanta el stack completo (docker compose up -d)"
+      echo "    $APP start -b|--build             Igual, pero reconstruye las imagenes primero"
+      echo "    $APP stop                         Para y remueve los contenedores del stack (docker stop + rm)"
+      echo "    $APP workwith <domain_name>       Elige la cuenta activa en addons y lkf-sanic-apps"
+      echo "    $APP workwith                     Muestra el estado de ambos repos"
+      echo "    $APP workon <local|preprod|prod>  Elige el environment activo en ambos repos"
+      echo "    $APP workon                       Muestra el environment actual de ambos repos"
+      echo
+      echo "    lkf-sanic-apps no tiene environment \"local\": workon local solo toca addons."
+      echo
+      exit 1
+}
+
+Repo_root="$(dirname "$(readlink -f "$0")")"
+
+_start(){
+  # -b/--build: por default NO se reconstruye. docker compose up -d ya construye
+  # solo si falta la imagen; forzar --build en cada start exige red (los Dockerfiles
+  # hacen ADD https://...) y tarda mas, aunque no haya cambiado nada. El rebuild
+  # queda para cuando de verdad cambiaste un Dockerfile o una dependencia.
+  local build_flag=""
+  for arg in "$@"; do
+    case "$arg" in
+      -b|--build) build_flag="--build" ;;
+    esac
+  done
+
+  # Redes externas: las comparten con el backend real cuando esta corriendo, se crean
+  # una sola vez por maquina (ver README). docker network create no es idempotente
+  # frente a "ya existe" (sale con error), asi que solo se llama si falta.
+  if ! docker network inspect linkaform >/dev/null 2>&1; then
+    echo "Creando red externa 'linkaform'..."
+    docker network create -d bridge --gateway 172.23.0.1 --subnet 172.23.0.0/16 linkaform
+  fi
+  if ! docker network inspect sanic >/dev/null 2>&1; then
+    echo "Creando red externa 'sanic'..."
+    docker network create -d bridge sanic
+  fi
+
+  if [[ ! -f "$Repo_root/.env" && -f "$Repo_root/.env.example" ]]; then
+    echo "No existe .env, copiando .env.example..."
+    cp "$Repo_root/.env.example" "$Repo_root/.env"
+  fi
+
+  ( cd "$Repo_root" && docker compose up -d $build_flag )
+
+  # MINIBACK_PORT tiene default 8000 en el compose; si el .env lo sobreescribe,
+  # los health checks de abajo deben apuntar al mismo puerto.
+  MINIBACK_PORT=8000
+  if [[ -f "$Repo_root/.env" ]]; then
+    val=$(grep -E '^MINIBACK_PORT=' "$Repo_root/.env" | tail -1 | cut -d= -f2-)
+    [[ -n "$val" ]] && MINIBACK_PORT="$val"
+  fi
+
+  echo
+  echo "Stack arriba. Health checks (puede tardar unos segundos en levantar):"
+  echo
+  echo "  lkf-miniback  http://localhost:$MINIBACK_PORT/api/health"
+  curl -s "localhost:$MINIBACK_PORT/api/health" || echo "  (sin respuesta todavia)"
+  echo
+  echo "  lkf-sanic-app http://localhost:8888/health"
+  curl -s "localhost:8888/health" || echo "  (sin respuesta todavia)"
+  echo
+  echo
+  echo "  soter (front) http://localhost:3000"
+  echo
+  echo "Si algo no responde: docker compose -f \"$Repo_root/docker-compose.yml\" logs -f <servicio>"
+}
+
+_stop(){
+  # docker stop + docker rm por nombre, no `docker compose down`: los container_name
+  # son fijos (el mini-back les habla por nombre via docker exec, ver CLAUDE.md), asi
+  # que pararlos y quitarlos por nombre es mas directo y es lo mismo que ya hacen
+  # addons/lkf y lkf-sanic-apps/lkf para su propio contenedor.
+  local containers=(soter lkf-miniback lkf-sanic-app lkf-addons)
+  local alguno=0
+  for c in "${containers[@]}"; do
+    if docker inspect --type=container "$c" >/dev/null 2>&1; then
+      alguno=1
+      echo "Deteniendo $c..."
+      docker stop "$c" >/dev/null
+      docker rm "$c" >/dev/null
+      echo "  removido"
+    else
+      echo "  $c no existe, se omite"
+    fi
+  done
+  if [[ "$alguno" == "0" ]]; then
+    echo "No habia contenedores del stack corriendo."
+  fi
+}
+
+Acction=""
+if [[ $# -gt 0 ]]; then
+  Acction=$1
+fi
+
+case "$Acction" in
+
+  start)
+    shift
+    _start ${@+"$@"}
+    exit $?
+  ;;
+
+  stop)
+    _stop
+    exit $?
+  ;;
+
+  workwith)
+    shift
+    python3 "$Repo_root/bin/workwith.py" ${@+"$@"}
+    exit $?
+  ;;
+
+  workon)
+    shift
+    python3 "$Repo_root/bin/workon.py" ${@+"$@"}
+    exit $?
+  ;;
+
+  -h|--help|"")
+    _usage
+  ;;
+
+  *)
+    echo "ERROR: accion desconocida: '$Acction'"
+    echo "       este lkf de la raiz solo sabe start, stop, workwith y workon."
+    _usage
+  ;;
+esac
