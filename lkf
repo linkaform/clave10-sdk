@@ -14,8 +14,13 @@ _usage(){
       echo "Usage: $APP <start|stop|workwith|workon> [args]"
       echo
       echo "    $APP start                        Levanta el stack completo (docker compose up -d)"
-      echo "    $APP start -b|--build             Igual, pero reconstruye las imagenes primero"
+      echo "    $APP start <servicio>...          Levanta solo esos servicios; si ya estan arriba, los reinicia (stop + start)"
+      echo "    $APP start -b|--build [servicio]  Igual, pero reconstruye las imagenes primero"
       echo "    $APP stop                         Para y remueve los contenedores del stack (docker stop + rm)"
+      echo "    $APP stop <servicio>...           Para y remueve solo esos servicios"
+      echo
+      echo "    Servicios: lkf-sanic-app, lkf-addons, miniback (o lkf-miniback), clave10"
+      echo
       echo "    $APP workwith <domain_name>       Elige la cuenta activa en addons y lkf-sanic-apps"
       echo "    $APP workwith                     Muestra el estado de ambos repos"
       echo "    $APP workon <local|preprod|prod>  Elige el environment activo en ambos repos"
@@ -28,15 +33,49 @@ _usage(){
 
 Repo_root="$(dirname "$(readlink -f "$0")")"
 
+# Nombre del servicio del compose == container_name (son fijos, ver CLAUDE.md).
+# "miniback" es alias corto de lkf-miniback. Deja el resultado en $Service y sale
+# directo si no lo conoce (no se usa $(...) para que el exit corte el script).
+Service=""
+_resolve_service(){
+  case "$1" in
+    clave10|lkf-sanic-app|lkf-addons) Service="$1" ;;
+    miniback|lkf-miniback)            Service="lkf-miniback" ;;
+    *)
+      echo "ERROR: servicio desconocido: '$1'"
+      echo "       validos: lkf-sanic-app, lkf-addons, miniback, clave10"
+      exit 1
+    ;;
+  esac
+}
+
+# docker stop + docker rm por nombre, no `docker compose down`: los container_name
+# son fijos (el mini-back les habla por nombre via docker exec) y asi se puede
+# apagar un solo servicio. Devuelve 0 si el contenedor existia.
+_remove_container(){
+  local c="$1"
+  if docker inspect --type=container "$c" >/dev/null 2>&1; then
+    echo "Deteniendo $c..."
+    docker stop "$c" >/dev/null
+    docker rm "$c" >/dev/null
+    echo "  removido"
+    return 0
+  fi
+  return 1
+}
+
 _start(){
   # -b/--build: por default NO se reconstruye. docker compose up -d ya construye
   # solo si falta la imagen; forzar --build en cada start exige red (los Dockerfiles
   # hacen ADD https://...) y tarda mas, aunque no haya cambiado nada. El rebuild
   # queda para cuando de verdad cambiaste un Dockerfile o una dependencia.
   local build_flag=""
+  local services=()
   for arg in "$@"; do
     case "$arg" in
       -b|--build) build_flag="--build" ;;
+      -*) echo "ERROR: opcion desconocida: '$arg'"; exit 1 ;;
+      *) _resolve_service "$arg"; services+=("$Service") ;;
     esac
   done
 
@@ -57,7 +96,21 @@ _start(){
     cp "$Repo_root/.env.example" "$Repo_root/.env"
   fi
 
-  ( cd "$Repo_root" && docker compose up -d $build_flag )
+  # Con servicios explicitos, los que ya existen se bajan antes: start sobre algo
+  # arriba se comporta como restart. Sin servicios, se levanta todo como siempre.
+  for s in ${services[@]+"${services[@]}"}; do
+    if _remove_container "$s"; then echo "  (reiniciando $s)"; fi
+  done
+
+  ( cd "$Repo_root" && docker compose up -d $build_flag ${services[@]+"${services[@]}"} )
+
+  # _wants <svc>: true si no se pidio ninguno en particular o si esta en la lista.
+  _wants(){
+    [[ ${#services[@]} -eq 0 ]] && return 0
+    local x
+    for x in "${services[@]}"; do [[ "$x" == "$1" ]] && return 0; done
+    return 1
+  }
 
   # MINIBACK_PORT tiene default 8000 en el compose; si el .env lo sobreescribe,
   # los health checks de abajo deben apuntar al mismo puerto.
@@ -68,34 +121,39 @@ _start(){
   fi
 
   echo
-  echo "Stack arriba. Health checks (puede tardar unos segundos en levantar):"
+  echo "Arriba. Health checks (puede tardar unos segundos en levantar):"
   echo
-  echo "  lkf-miniback  http://localhost:$MINIBACK_PORT/api/health"
-  curl -s "localhost:$MINIBACK_PORT/api/health" || echo "  (sin respuesta todavia)"
-  echo
-  echo "  lkf-sanic-app http://localhost:8888/health"
-  curl -s "localhost:8888/health" || echo "  (sin respuesta todavia)"
-  echo
-  echo
-  echo "  clave10 (front) http://localhost:3000"
+  if _wants lkf-miniback; then
+    echo "  lkf-miniback  http://localhost:$MINIBACK_PORT/api/health"
+    curl -s "localhost:$MINIBACK_PORT/api/health" || echo "  (sin respuesta todavia)"
+    echo
+  fi
+  if _wants lkf-sanic-app; then
+    echo "  lkf-sanic-app http://localhost:8888/health"
+    curl -s "localhost:8888/health" || echo "  (sin respuesta todavia)"
+    echo
+  fi
+  if _wants clave10; then
+    echo "  clave10 (front) http://localhost:3000"
+  fi
   echo
   echo "Si algo no responde: docker compose -f \"$Repo_root/docker-compose.yml\" logs -f <servicio>"
 }
 
 _stop(){
-  # docker stop + docker rm por nombre, no `docker compose down`: los container_name
-  # son fijos (el mini-back les habla por nombre via docker exec, ver CLAUDE.md), asi
-  # que pararlos y quitarlos por nombre es mas directo y es lo mismo que ya hacen
-  # addons/lkf y lkf-sanic-apps/lkf para su propio contenedor.
-  local containers=(clave10 lkf-miniback lkf-sanic-app lkf-addons)
+  # Es lo mismo que ya hacen addons/lkf y lkf-sanic-apps/lkf para su propio contenedor.
+  local containers=()
+  for arg in "$@"; do
+    _resolve_service "$arg"
+    containers+=("$Service")
+  done
+  if [[ ${#containers[@]} -eq 0 ]]; then
+    containers=(clave10 lkf-miniback lkf-sanic-app lkf-addons)
+  fi
   local alguno=0
   for c in "${containers[@]}"; do
-    if docker inspect --type=container "$c" >/dev/null 2>&1; then
+    if _remove_container "$c"; then
       alguno=1
-      echo "Deteniendo $c..."
-      docker stop "$c" >/dev/null
-      docker rm "$c" >/dev/null
-      echo "  removido"
     else
       echo "  $c no existe, se omite"
     fi
@@ -119,7 +177,8 @@ case "$Acction" in
   ;;
 
   stop)
-    _stop
+    shift
+    _stop ${@+"$@"}
     exit $?
   ;;
 
