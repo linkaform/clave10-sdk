@@ -91,6 +91,8 @@ services:
       sanic:
     ports:
       - "8888:8000"
+    environment:
+      USE_LOCAL_SETTINGS: ${USE_LOCAL_SETTINGS:-1}
     volumes:
       - ./lkf-sanic-apps/addons:/usr/local/lib/python3.12/site-packages/lkf_addons/
       - ./lkf-sanic-apps/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py
