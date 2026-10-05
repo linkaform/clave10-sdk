@@ -91,6 +91,10 @@ services:
       sanic:
     ports:
       - "8888:8000"
+    environment:
+      # local_settings.py necesita secrets/accounts.ini (./lkf workwith), que solo
+      # existe en dev. En produccion se deja sin setear.
+      USE_LOCAL_SETTINGS: ${USE_LOCAL_SETTINGS:-1}
     volumes:
       - ./lkf-sanic-apps/addons:/usr/local/lib/python3.12/site-packages/lkf_addons/
       - ./lkf-sanic-apps/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py

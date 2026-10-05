@@ -95,6 +95,12 @@ Aporta las skills `/lkf-claude:lkf`, `:lkf-module`, `:lkf-learn`,
 Instalarlo o no es decision de cada quien: Claude Code lo guarda en tu
 `.claude/settings.json` local, que estos repos no versionan.
 
+## Convenciones de commits
+
+No agregar lineas de atribucion a Claude (`Co-Authored-By: Claude ...`) en
+los mensajes de commit ni en descripciones de pull request de este repo o
+sus submodulos.
+
 ## Trampas conocidas
 
 - **`~/lkf` literal.** `addons/lkf:325`, `lkf-sanic-apps/lkf:324` y
