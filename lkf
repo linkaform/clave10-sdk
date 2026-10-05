@@ -20,6 +20,9 @@ _usage(){
       echo "    $APP stop <servicio>...           Para y remueve solo esos servicios"
       echo
       echo "    Servicios: lkf-sanic-app, lkf-addons, miniback (o lkf-miniback), clave10"
+      echo "    start lkf-addons / lkf-sanic-app (solos, sin -b) delega en addons/lkf y"
+      echo "    lkf-sanic-apps/lkf: mismo comportamiento que 'cd <repo> && ./lkf start <arg>',"
+      echo "    incluido el docker exec -it que te deja dentro del contenedor."
       echo
       echo "    $APP workwith <domain_name>       Elige la cuenta activa en addons y lkf-sanic-apps"
       echo "    $APP workwith                     Muestra el estado de ambos repos"
@@ -49,12 +52,30 @@ _resolve_service(){
   esac
 }
 
+# lkf-addons y lkf-sanic-app tienen su propio ./lkf, y su "start" no es solo
+# levantar el contenedor: si ya existe te mete adentro con `docker exec -it bash`,
+# y si no existe lo crea con SU compose (no el de la raiz) y luego te mete igual.
+# En vez de reimplementar eso aqui, delegamos -- mismo comportamiento que
+# `cd addons && ./lkf start addons` hecho a mano. Deja el resultado en
+# $Child_lkf/$Child_arg; return 1 si el servicio no tiene uno.
+Child_lkf=""
+Child_arg=""
+_child_lkf_for(){
+  case "$1" in
+    lkf-addons)    Child_lkf="$Repo_root/addons/lkf";         Child_arg="addons" ;;
+    lkf-sanic-app) Child_lkf="$Repo_root/lkf-sanic-apps/lkf"; Child_arg="sanic" ;;
+    *) return 1 ;;
+  esac
+}
+
+_container_exists(){ docker inspect --type=container "$1" >/dev/null 2>&1; }
+
 # docker stop + docker rm por nombre, no `docker compose down`: los container_name
 # son fijos (el mini-back les habla por nombre via docker exec) y asi se puede
 # apagar un solo servicio. Devuelve 0 si el contenedor existia.
 _remove_container(){
   local c="$1"
-  if docker inspect --type=container "$c" >/dev/null 2>&1; then
+  if _container_exists "$c"; then
     echo "Deteniendo $c..."
     docker stop "$c" >/dev/null
     docker rm "$c" >/dev/null
@@ -62,6 +83,24 @@ _remove_container(){
     return 0
   fi
   return 1
+}
+
+# Redes externas: las comparten con el backend real cuando esta corriendo, se crean
+# una sola vez por maquina (ver README). docker network create no es idempotente
+# frente a "ya existe" (sale con error), asi que solo se llama si falta.
+_ensure_networks_and_env(){
+  if ! docker network inspect linkaform >/dev/null 2>&1; then
+    echo "Creando red externa 'linkaform'..."
+    docker network create -d bridge --gateway 172.23.0.1 --subnet 172.23.0.0/16 linkaform
+  fi
+  if ! docker network inspect sanic >/dev/null 2>&1; then
+    echo "Creando red externa 'sanic'..."
+    docker network create -d bridge sanic
+  fi
+  if [[ ! -f "$Repo_root/.env" && -f "$Repo_root/.env.example" ]]; then
+    echo "No existe .env, copiando .env.example..."
+    cp "$Repo_root/.env.example" "$Repo_root/.env"
+  fi
 }
 
 _start(){
@@ -79,22 +118,32 @@ _start(){
     esac
   done
 
-  # Redes externas: las comparten con el backend real cuando esta corriendo, se crean
-  # una sola vez por maquina (ver README). docker network create no es idempotente
-  # frente a "ya existe" (sale con error), asi que solo se llama si falta.
-  if ! docker network inspect linkaform >/dev/null 2>&1; then
-    echo "Creando red externa 'linkaform'..."
-    docker network create -d bridge --gateway 172.23.0.1 --subnet 172.23.0.0/16 linkaform
+  # Un solo servicio y sin -b: si tiene su propio lkf, delegar ahi en vez de tocar
+  # el compose de la raiz. Con -b no delega -- su "build" es otra accion (con sus
+  # propios tags base/dev/local/prod), no se puede mezclar con este flag.
+  if [[ ${#services[@]} -eq 1 && -z "$build_flag" ]] && _child_lkf_for "${services[0]}"; then
+    local svc="${services[0]}"
+    if ! _container_exists "$svc"; then
+      # Si no existe y delegaramos de una vez, addons/lkf o lkf-sanic-apps/lkf lo
+      # crearian con SU PROPIO compose (docker/docker-compose.yml de ese repo), no
+      # el de la raiz. El contenedor quedaria con otro project label y el siguiente
+      # "./lkf start" de raiz chocaria por nombre duplicado al intentar recrearlo
+      # (ya paso probando esto). Por eso se crea aqui, con el compose de la raiz,
+      # y se delega solo para el "entrar al contenedor" de encima.
+      echo "$svc no existe, se crea primero con el compose de la raiz..."
+      _ensure_networks_and_env
+      ( cd "$Repo_root" && docker compose up -d "$svc" )
+    fi
+    echo "-> delegando en $(basename "$(dirname "$Child_lkf")")/lkf start $Child_arg"
+    cd "$(dirname "$Child_lkf")"
+    exec "$Child_lkf" start "$Child_arg"
   fi
-  if ! docker network inspect sanic >/dev/null 2>&1; then
-    echo "Creando red externa 'sanic'..."
-    docker network create -d bridge sanic
+  if [[ ${#services[@]} -eq 1 && -n "$build_flag" ]] && _child_lkf_for "${services[0]}" >/dev/null 2>&1; then
+    echo "Nota: -b usa el compose de la raiz para este servicio y no entra al"
+    echo "      contenedor. Para eso corre luego:  cd $(basename "$(dirname "$Child_lkf")") && ./lkf start $Child_arg"
   fi
 
-  if [[ ! -f "$Repo_root/.env" && -f "$Repo_root/.env.example" ]]; then
-    echo "No existe .env, copiando .env.example..."
-    cp "$Repo_root/.env.example" "$Repo_root/.env"
-  fi
+  _ensure_networks_and_env
 
   # Con servicios explicitos, los que ya existen se bajan antes: start sobre algo
   # arriba se comporta como restart. Sin servicios, se levanta todo como siempre.
