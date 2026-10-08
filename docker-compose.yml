@@ -57,7 +57,7 @@ services:
     ports:
       - "5001:5000"
     volumes:
-      - ./addons/lkf_addons:/usr/local/lib/python3.10/site-packages/lkf_addons/
+      - ./addons/lkf_addons:/usr/local/lib/python3.12/site-packages/lkf_addons/
       - ./addons/lkf_addons/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py
       - ./addons/lkf_addons/bin/download_module.py:/usr/local/bin/download_module.py
       - ./addons/lkf_addons/bin/json_xml.py:/usr/local/bin/json_xml.py
@@ -65,7 +65,7 @@ services:
       - ./addons/config:/srv/scripts/addons/config
       - ./addons/secrets:/srv/scripts/addons/secrets
       - ./addons/modules:/srv/scripts/addons/modules
-      - ./linkaform_api/linkaform_api:/usr/local/lib/python3.10/site-packages/linkaform_api/
+      - ./linkaform_api/linkaform_api:/usr/local/lib/python3.12/site-packages/linkaform_api/
       # El repo `lkf` (infosync_scripts) no es submodulo de este paraguas. Si lo
       # agregas, descomenta:
       # - ./lkf/infosync_scripts/:/srv/infosync_scripts
