@@ -3,10 +3,7 @@
 """workon (raiz): elige el environment activo en addons/ y lkf-sanic-apps/ a la vez.
 
 Orquestador sobre addons/lkf workon y lkf-sanic-apps/lkf workon, cada uno con
-su propio secrets/current_env. lkf-sanic-apps no tiene environment "local"
-(el sanic-app siempre es el destino local de los *_sdk.py, no hay otro modo
-para el), asi que workon local solo se aplica a addons y aqui se avisa en vez
-de fallar.
+su propio secrets/current_env. Ambos soportan local, preprod y prod.
 
     ./lkf workon <local|preprod|prod>
     ./lkf workon            # muestra el environment actual de ambos repos
@@ -22,10 +19,9 @@ TARGETS = (
     ('lkf-sanic-apps', os.path.join(REPO, 'lkf-sanic-apps', 'lkf')),
 )
 
-# Ver lkf-sanic-apps/bin/workon.py: su ENVS es (preprod, prod), sin local.
-SIN_SOPORTE = {
-    'lkf-sanic-apps': {'local'},
-}
+# Environments que un repo no soporta (se avisa en vez de fallar). Hoy ambos
+# soportan los tres, queda por si algun repo vuelve a quedarse corto.
+SIN_SOPORTE = {}
 
 
 def run(nombre, script, args):

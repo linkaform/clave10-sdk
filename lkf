@@ -29,14 +29,14 @@ _usage(){
       echo "    $APP workon <local|preprod|prod>  Elige el environment activo en ambos repos"
       echo "    $APP workon                       Muestra el environment actual de ambos repos"
       echo
-      echo "    lkf-sanic-apps no tiene environment \"local\": workon local solo toca addons."
-      echo
       exit 1
 }
 
 Repo_root="$(dirname "$(readlink -f "$0")")"
 
-# Nombre del servicio del compose == container_name (son fijos, ver CLAUDE.md).
+# $Service es el container_name (fijo, ver CLAUDE.md). Ojo: el nombre del servicio
+# en el compose es igual salvo el mini-back (servicio "miniback", contenedor
+# "lkf-miniback"); al llamar a `docker compose` se traduce.
 # "miniback" es alias corto de lkf-miniback. Deja el resultado en $Service y sale
 # directo si no lo conoce (no se usa $(...) para que el exit corte el script).
 Service=""
@@ -151,7 +151,43 @@ _start(){
     if _remove_container "$s"; then echo "  (reiniciando $s)"; fi
   done
 
-  ( cd "$Repo_root" && docker compose up -d $build_flag ${services[@]+"${services[@]}"} )
+  # Sin servicios explicitos (stack completo) no se baja nada, pero tampoco se deja
+  # a compose adivinar: un contenedor con nombre fijo que quedo en exited (o creado
+  # por otro compose, como el de addons/ o lkf-sanic-apps/) hace que `up` falle con
+  # "container name already in use". Por cada uno: corriendo -> se omite, no se
+  # toca; existe pero no corre -> docker rm y compose lo recrea.
+  local to_up=("${services[@]+"${services[@]}"}")
+  if [[ ${#services[@]} -eq 0 ]]; then
+    to_up=()
+    local c state
+    for c in clave10 lkf-miniback lkf-sanic-app lkf-addons; do
+      if ! _container_exists "$c"; then
+        to_up+=("$c")
+        continue
+      fi
+      state=$(docker inspect -f '{{.State.Status}}' "$c")
+      if [[ "$state" == "running" ]]; then
+        echo "$c ya esta corriendo, se omite"
+      else
+        echo "$c existe en estado '$state', removiendo..."
+        docker rm "$c" >/dev/null
+        to_up+=("$c")
+      fi
+    done
+  fi
+
+  if [[ ${#to_up[@]} -gt 0 ]]; then
+    # compose se direcciona por nombre de servicio, que solo difiere del
+    # container_name en el mini-back (servicio "miniback").
+    local compose_svcs=() t
+    for t in "${to_up[@]}"; do
+      [[ "$t" == "lkf-miniback" ]] && t="miniback"
+      compose_svcs+=("$t")
+    done
+    ( cd "$Repo_root" && docker compose up -d $build_flag "${compose_svcs[@]}" )
+  else
+    echo "Todo el stack ya estaba corriendo."
+  fi
 
   # _wants <svc>: true si no se pidio ninguno en particular o si esta en la lista.
   _wants(){
