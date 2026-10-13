@@ -197,9 +197,9 @@ _start(){
     return 1
   }
 
-  # MINIBACK_PORT tiene default 8000 en el compose; si el .env lo sobreescribe,
+  # MINIBACK_PORT tiene default 8014 en el compose; si el .env lo sobreescribe,
   # los health checks de abajo deben apuntar al mismo puerto.
-  MINIBACK_PORT=8000
+  MINIBACK_PORT=8014
   if [[ -f "$Repo_root/.env" ]]; then
     val=$(grep -E '^MINIBACK_PORT=' "$Repo_root/.env" | tail -1 | cut -d= -f2-)
     [[ -n "$val" ]] && MINIBACK_PORT="$val"
@@ -214,12 +214,12 @@ _start(){
     echo
   fi
   if _wants lkf-sanic-app; then
-    echo "  lkf-sanic-app http://localhost:8888/health"
-    curl -s "localhost:8888/health" || echo "  (sin respuesta todavia)"
+    echo "  lkf-sanic-app http://localhost:8010/health"
+    curl -s "localhost:8010/health" || echo "  (sin respuesta todavia)"
     echo
   fi
   if _wants clave10; then
-    echo "  clave10 (front) http://localhost:3000"
+    echo "  clave10 (front) http://localhost:3010"
   fi
   echo
   echo "Si algo no responde: docker compose -f \"$Repo_root/docker-compose.yml\" logs -f <servicio>"

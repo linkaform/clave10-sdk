@@ -22,13 +22,13 @@ aqui tambien.
 ## Que levanta
 
 ```
-navegador (localhost:3000)
+navegador (localhost:3010)
    |  clave10, el front
    v
-lkf-miniback (localhost:8000)
+lkf-miniback (localhost:8014)
    |  decide por el nombre del script
    |
-   |-- *_sdk.py  --> docker exec lkf-sanic-app   (puerto 8888 publicado)
+   |-- *_sdk.py  --> docker exec lkf-sanic-app   (puerto 8010 publicado)
    +-- lo demas  --> docker exec lkf-addons
 ```
 
@@ -37,7 +37,7 @@ El mini-back no le habla a los backends por red: hace `docker exec` por
 `container_name` del compose son fijos y no se deben cambiar.
 
 El front tampoco usa la red interna: sus llamadas salen del navegador, asi que
-`NEXT_PUBLIC_API_BASE_URL` apunta a `http://localhost:8000/api`.
+`NEXT_PUBLIC_API_BASE_URL` apunta a `http://localhost:8014/api`.
 
 ## Primer arranque
 
@@ -144,8 +144,8 @@ docker compose down
 Verificar que quedo bien:
 
 ```bash
-curl -s localhost:8000/api/health   # ok:true y los dos targets con su conteo
-curl -s localhost:8888/health       # {"status": "ok", ...}
+curl -s localhost:8014/api/health   # ok:true y los dos targets con su conteo
+curl -s localhost:8010/health       # {"status": "ok", ...}
 ```
 
 En `/api/health`, un target con `scripts: 0` significa que el montaje de
@@ -162,12 +162,12 @@ docker compose exec lkf-sanic-app bash
 
 | Servicio        | Host   | Contenedor |
 | --------------- | ------ | ---------- |
-| `clave10`       | 3000   | 3000       |
-| `lkf-miniback`  | 8000   | 8000       |
-| `lkf-sanic-app` | 8888   | 8000       |
-| `lkf-addons`    | 5001   | 5000       |
+| `clave10`       | 3010   | 3010       |
+| `lkf-miniback`  | 8014   | 8014       |
+| `lkf-sanic-app` | 8010   | 8010       |
+| `lkf-addons`    | 5010   | 5010       |
 
-`MINIBACK_PORT` en `.env` mueve el 8000 y el front lo sigue solo.
+`MINIBACK_PORT` en `.env` mueve el 8014 y el front lo sigue solo.
 
 ## Orden de arranque
 

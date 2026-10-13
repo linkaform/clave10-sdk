@@ -53,8 +53,8 @@ git submodule foreach 'git log --oneline @{u}..HEAD'   # vacio = todo pusheado
 cp .env.example .env    # opcional, todo tiene default
 docker compose up -d --build
 
-curl -s localhost:8000/api/health   # ok:true, los dos targets con scripts > 0
-curl -s localhost:8888/health       # {"status": "ok", ...}
+curl -s localhost:8014/api/health   # ok:true, los dos targets con scripts > 0
+curl -s localhost:8010/health       # {"status": "ok", ...}
 ```
 
 Antes del primer `up` hacen falta las dos redes externas y los secrets de
@@ -66,10 +66,10 @@ y el contenedor arranca sin servir scripts. El README tiene la secuencia.
 
 | Servicio        | Host | Contenedor |
 | --------------- | ---- | ---------- |
-| `clave10`       | 3000 | 3000       |
-| `lkf-miniback`  | 8000 | 8000       |
-| `lkf-sanic-app` | 8888 | 8000       |
-| `lkf-addons`    | 5001 | 5000       |
+| `clave10`       | 3010 | 3010       |
+| `lkf-miniback`  | 8014 | 8014       |
+| `lkf-sanic-app` | 8010 | 8010       |
+| `lkf-addons`    | 5010 | 5010       |
 
 El mini-back no le habla a los backends por red: hace `docker exec` por
 **nombre de contenedor** contra el `docker.sock` del host. Por eso los

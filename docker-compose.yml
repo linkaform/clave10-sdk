@@ -5,10 +5,10 @@
 #
 # La cadena que levanta es:
 #
-#   navegador (localhost:3000)
+#   navegador (localhost:3010)
 #      |  clave10, el front
 #      v
-#   lkf-miniback (localhost:8000)
+#   lkf-miniback (localhost:8014)
 #      |  decide por el nombre del script
 #      |
 #      |-- *_sdk.py  --> docker exec lkf-sanic-app  (repo lkf-sanic-apps)
@@ -55,7 +55,7 @@ services:
     networks:
       linkaform:
     ports:
-      - "5001:5000"
+      - "5010:5010"
     volumes:
       - ./addons/lkf_addons:/usr/local/lib/python3.12/site-packages/lkf_addons/
       - ./addons/lkf_addons/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py
@@ -75,7 +75,7 @@ services:
     tty: true
 
   # ---------------------------------------------------------------------------
-  # App Sanic. Esta si tiene que estar SIRVIENDO en su puerto 8000 interno: los
+  # App Sanic. Esta si tiene que estar SIRVIENDO en su puerto 8010 interno: los
   # *_sdk.py no son autonomos, le pegan por HTTP a su propio contenedor.
   # ---------------------------------------------------------------------------
   lkf-sanic-app:
@@ -90,9 +90,11 @@ services:
     networks:
       sanic:
     ports:
-      - "8888:8000"
+      - "8010:8010"
     environment:
       USE_LOCAL_SETTINGS: ${USE_LOCAL_SETTINGS:-1}
+      # Puerto de escucha de Sanic (main.py) y destino del dispatch de auth.py.
+      PORT: 8010
     volumes:
       - ./lkf-sanic-apps/addons:/usr/local/lib/python3.12/site-packages/lkf_addons/
       - ./lkf-sanic-apps/bin/lkfaddons.py:/usr/local/bin/lkfaddons.py
@@ -117,7 +119,7 @@ services:
     command: "/docker/main_entrypoint.sh"
     healthcheck:
       # GET /health lo registra app/main.py; reporta tambien el estado de mongo.
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -140,7 +142,7 @@ services:
     networks:
       linkaform:
     ports:
-      - "${MINIBACK_PORT:-8000}:8000"
+      - "${MINIBACK_PORT:-8014}:8014"
     environment:
       LKF_ADDONS_CONTAINER: ${LKF_ADDONS_CONTAINER:-lkf-addons}
       LKF_MODULES_PATH: ${LKF_MODULES_PATH:-/srv/scripts/addons/modules}
@@ -174,7 +176,7 @@ services:
       # Para exigir que Sanic este sirviendo antes de arrancar, cambia la linea
       # de arriba por:  condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8014/api/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -195,11 +197,11 @@ services:
       dockerfile: Dockerfile
       target: develop
     ports:
-      - "3000:3000"
+      - "3010:3010"
     environment:
       # Se interpola con el mismo MINIBACK_PORT del mini-back para que cambiar
       # el puerto no desincronice al front.
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:${MINIBACK_PORT:-8000}/api
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${MINIBACK_PORT:-8014}/api
       # Contra el backend real:
       # NEXT_PUBLIC_API_BASE_URL: https://app.linkaform.com/api
     volumes:
@@ -211,12 +213,12 @@ services:
     depends_on:
       miniback:
         condition: service_healthy
-    command: yarn dev
+    command: yarn dev -p 3010
     stdin_open: true
     tty: true
 
   # ---------------------------------------------------------------------------
-  # Imagenes base. Nunca arrancan (chocarian en el 5001 con lkf-addons); estan
+  # Imagenes base. Nunca arrancan (chocarian en el 5010 con lkf-addons); estan
   # aqui solo para poder construirlas desde un lugar, porque las imagenes
   # `develop` se construyen FROM linkaform/{addons,sanic-app}:base.
   #
