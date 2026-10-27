@@ -77,6 +77,13 @@ El mini-back no le habla a los backends por red: hace `docker exec` por
 destino por el nombre del script: `*_sdk.py` va a `lkf-sanic-app`, lo demas a
 `lkf-addons`.
 
+## `lkf` desde cualquier carpeta
+
+`./lkf install` (una vez por maquina) deja `~/bin/lkf` apuntando a este repo y
+activa el autocompletado con TAB de bash (`bin/lkf-completion.bash`). Si agregas
+una accion o un servicio al `lkf` de la raiz, actualiza tambien ese archivo.
+Los dominios de `lkf workwith <TAB>` salen de `lkf workwith --list`.
+
 ## Plugin de Claude Code
 
 El conocimiento de como desarrollar sobre `linkaform_sdk` — convenciones,

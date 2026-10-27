@@ -132,6 +132,22 @@ Mover un submodulo deja su puntero distinto al que registra el padre
 (` M <submodulo>`). Mientras no lo commitees aqui, el cambio vive solo en tu
 disco y el proximo clon vuelve al SHA viejo.
 
+## `lkf` desde cualquier carpeta
+
+```bash
+./lkf install        # una vez por maquina
+```
+
+Deja `~/bin/lkf` apuntando a este repo (symlink; `~/bin` ya va en el PATH) y activa
+el autocompletado con TAB en bash (`~/.bash_completion.d/lkf`, que `~/.bashrc`
+carga). Despues, desde donde sea: `lkf start`, `lkf stop clave10`,
+`lkf workon <TAB>`, `lkf workwith se<TAB>`. El `lkf` ubica el repo resolviendo su
+propio symlink, asi que no depende de la carpeta en la que estes.
+
+Si `~/bin/lkf` ya apuntaba a otro lado (un `lkf` viejo) pregunta antes de
+reemplazarlo, y dice como volver al anterior. Si agregas una accion o un
+servicio al `lkf` de la raiz, agregalo tambien en `bin/lkf-completion.bash`.
+
 ## Dia a dia
 
 ```bash

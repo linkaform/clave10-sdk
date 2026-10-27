@@ -11,7 +11,7 @@ set -u
 _usage(){
   APP=$(basename "$0")
       echo
-      echo "Usage: $APP <start|stop|workwith|workon> [args]"
+      echo "Usage: $APP <start|stop|workwith|workon|install> [args]"
       echo
       echo "    $APP start                        Levanta el stack completo (docker compose up -d)"
       echo "    $APP start <servicio>...          Levanta solo esos servicios; si ya estan arriba, los reinicia (stop + start)"
@@ -28,6 +28,9 @@ _usage(){
       echo "    $APP workwith                     Muestra el estado de ambos repos"
       echo "    $APP workon <local|preprod|prod>  Elige el environment activo en ambos repos"
       echo "    $APP workon                       Muestra el environment actual de ambos repos"
+      echo
+      echo "    $APP install [-y]                 Deja 'lkf' en ~/bin (corre desde cualquier carpeta) y activa el"
+      echo "                                      autocompletado con TAB en bash (~/.bash_completion.d/lkf)"
       echo
       exit 1
 }
@@ -248,6 +251,58 @@ _stop(){
   fi
 }
 
+# Deja el repo usable desde cualquier carpeta: `lkf` en ~/bin (que ya va en el PATH) y el
+# autocompletado donde ~/.bashrc ya lo busca. Son symlinks, asi que un git pull los
+# actualiza solos. Idempotente. Si ~/bin/lkf ya apunta a otro lado (p.ej. un lkf viejo)
+# pregunta antes de reemplazarlo; -y lo reemplaza sin preguntar.
+_install(){
+  local yes=0 arg
+  for arg in "$@"; do
+    case "$arg" in
+      -y) yes=1 ;;
+      *) echo "ERROR: opcion desconocida: '$arg'"; exit 1 ;;
+    esac
+  done
+
+  local bindir="$HOME/bin" link="$HOME/bin/lkf" self="$Repo_root/lkf" actual
+  mkdir -p "$bindir"
+  if [[ -L "$link" ]]; then
+    actual="$(readlink -f "$link")"
+    if [[ "$actual" == "$(readlink -f "$self")" ]]; then
+      echo "ok  $link -> $self (ya estaba)"
+    else
+      echo "$link ya apunta a: $(readlink "$link")"
+      local resp="n"
+      if [[ $yes -eq 1 ]]; then resp="y"; else read -r -p "Reemplazarlo por $self? [y/N] " resp; fi
+      if [[ "$resp" == "y" || "$resp" == "Y" ]]; then
+        echo "  (para volver al anterior: ln -sfn $(readlink "$link") $link)"
+        ln -sfn "$self" "$link"
+        echo "ok  $link -> $self"
+      else
+        echo "  se deja como estaba; sin ese symlink 'lkf' no corre desde cualquier carpeta."
+      fi
+    fi
+  elif [[ -e "$link" ]]; then
+    echo "ERROR: $link existe y no es un symlink, no lo toco."
+    exit 1
+  else
+    ln -s "$self" "$link"
+    echo "ok  $link -> $self"
+  fi
+  case ":$PATH:" in
+    *":$bindir:"*) ;;
+    *) echo "OJO: $bindir no esta en tu PATH; agregalo en ~/.bashrc:  export PATH=\"\$HOME/bin:\$PATH\"" ;;
+  esac
+
+  local compdir="$HOME/.bash_completion.d"
+  mkdir -p "$compdir"
+  ln -sfn "$Repo_root/bin/lkf-completion.bash" "$compdir/lkf"
+  echo "ok  $compdir/lkf -> $Repo_root/bin/lkf-completion.bash"
+  echo
+  echo "Abre una terminal nueva, o en esta corre:  source $compdir/lkf"
+  echo "(si tu ~/.bashrc no carga ~/.bash_completion.d/*, agrega esa linea ahi)"
+}
+
 Acction=""
 if [[ $# -gt 0 ]]; then
   Acction=$1
@@ -279,13 +334,19 @@ case "$Acction" in
     exit $?
   ;;
 
+  install)
+    shift
+    _install ${@+"$@"}
+    exit $?
+  ;;
+
   -h|--help|"")
     _usage
   ;;
 
   *)
     echo "ERROR: accion desconocida: '$Acction'"
-    echo "       este lkf de la raiz solo sabe start, stop, workwith y workon."
+    echo "       este lkf de la raiz solo sabe start, stop, workwith, workon e install."
     _usage
   ;;
 esac

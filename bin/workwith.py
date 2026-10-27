@@ -36,6 +36,12 @@ def run(nombre, script, args):
 
 def main(argv):
     args = argv[1:]
+    # --list es para el autocompletado: lo atiende addons/bin/workwith.py directo (el
+    # catalogo de cuentas es el mismo en los dos repos) y sin pasar por addons/lkf,
+    # que imprimiria su propio ruido antes de la lista.
+    if args == ['--list']:
+        res = subprocess.run([sys.executable, os.path.join(REPO, 'addons', 'bin', 'workwith.py'), '--list'])
+        return res.returncode
     codigos = []
     for nombre, script in TARGETS:
         if not os.path.exists(script):
