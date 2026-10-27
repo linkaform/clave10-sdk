@@ -35,6 +35,10 @@ networks:
   sanic:
     name: sanic
     external: true
+  # Red del Airflow local; ahi vive airflow_bob (Bob), al que le pegan los backends.
+  airflow_default:
+    name: airflow_default
+    external: true
 
 services:
   # ---------------------------------------------------------------------------
@@ -54,6 +58,7 @@ services:
       target: develop
     networks:
       linkaform:
+      airflow_default:
     ports:
       - "5010:5010"
     volumes:
@@ -89,6 +94,7 @@ services:
       target: develop
     networks:
       sanic:
+      airflow_default:
     ports:
       - "8010:8010"
     environment:
