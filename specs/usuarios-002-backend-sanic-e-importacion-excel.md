@@ -1,7 +1,7 @@
-# SPEC 02 — Backend de usuarios en sanic, Uso Horario e Idioma, y alta masiva por Excel
+# SPEC usuarios-002 — Backend de usuarios en sanic, Uso Horario e Idioma, y alta masiva por Excel
 
 > **Status:** Aprobado
-> **Depends on:** SPEC 01
+> **Depends on:** SPEC usuarios-001
 > **Date:** 2026-10-21
 > **Objective:** Mover a sanic el backend del alta de usuarios (hoy en `addons`), agregar a los usuarios los campos Uso Horario e Idioma, y permitir dar de alta usuarios nuevos en bloque con un Excel (con plantilla descargable).
 

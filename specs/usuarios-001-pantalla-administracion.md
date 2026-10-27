@@ -1,4 +1,4 @@
-# SPEC 01 — Pantalla de administración de usuarios
+# SPEC usuarios-001 — Pantalla de administración de usuarios
 
 > **Status:** Aprobado
 > **Depends on:** ninguna
