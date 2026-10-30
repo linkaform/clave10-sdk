@@ -30,7 +30,7 @@ _usage(){
       echo "    $APP workon                       Muestra el environment actual de ambos repos"
       echo
       echo "    $APP install [-y]                 Deja 'lkf' en ~/bin (corre desde cualquier carpeta) y activa el"
-      echo "                                      autocompletado con TAB en bash (~/.bash_completion.d/lkf)"
+      echo "                                      autocompletado con TAB en bash/zsh (~/.bash_completion.d/lkf)"
       echo
       exit 1
 }
@@ -289,9 +289,12 @@ _install(){
     ln -s "$self" "$link"
     echo "ok  $link -> $self"
   fi
+  # El rc depende del shell de login: en macOS es zsh, que no lee ~/.bashrc.
+  local rc="~/.bashrc"
+  [[ "$(basename "${SHELL:-}")" == "zsh" ]] && rc="~/.zshrc"
   case ":$PATH:" in
     *":$bindir:"*) ;;
-    *) echo "OJO: $bindir no esta en tu PATH; agregalo en ~/.bashrc:  export PATH=\"\$HOME/bin:\$PATH\"" ;;
+    *) echo "OJO: $bindir no esta en tu PATH; agregalo en $rc:  export PATH=\"\$HOME/bin:\$PATH\"" ;;
   esac
 
   local compdir="$HOME/.bash_completion.d"
@@ -299,8 +302,14 @@ _install(){
   ln -sfn "$Repo_root/bin/lkf-completion.bash" "$compdir/lkf"
   echo "ok  $compdir/lkf -> $Repo_root/bin/lkf-completion.bash"
   echo
-  echo "Abre una terminal nueva, o en esta corre:  source $compdir/lkf"
-  echo "(si tu ~/.bashrc no carga ~/.bash_completion.d/*, agrega esa linea ahi)"
+  if [[ "$rc" == "~/.zshrc" ]]; then
+    echo "En zsh el TAB necesita bashcompinit; agrega en ~/.zshrc (despues de compinit, si lo usas):"
+    echo "  autoload -Uz bashcompinit && bashcompinit"
+    echo "  source $compdir/lkf"
+  else
+    echo "Abre una terminal nueva, o en esta corre:  source $compdir/lkf"
+    echo "(si tu ~/.bashrc no carga ~/.bash_completion.d/*, agrega esa linea ahi)"
+  fi
 }
 
 Acction=""
