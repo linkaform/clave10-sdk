@@ -80,7 +80,8 @@ destino por el nombre del script: `*_sdk.py` va a `lkf-sanic-app`, lo demas a
 ## `lkf` desde cualquier carpeta
 
 `./lkf install` (una vez por maquina) deja `~/bin/lkf` apuntando a este repo y
-activa el autocompletado con TAB de bash (`bin/lkf-completion.bash`). Si agregas
+activa el autocompletado con TAB de bash, y de zsh via `bashcompinit`
+(`bin/lkf-completion.bash`; nada de `mapfile` ni indexar `COMP_WORDS`). Si agregas
 una accion o un servicio al `lkf` de la raiz, actualiza tambien ese archivo.
 Los dominios de `lkf workwith <TAB>` salen de `lkf workwith --list`.
 
