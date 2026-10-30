@@ -140,7 +140,7 @@ disco y el proximo clon vuelve al SHA viejo.
 
 Deja `~/bin/lkf` apuntando a este repo (symlink; `~/bin` ya va en el PATH) y activa
 el autocompletado con TAB en bash (`~/.bash_completion.d/lkf`, que `~/.bashrc`
-carga). En zsh (el default de macOS) hay que agregar a `~/.zshrc`, despues de
+carga). Si tu shell es zsh, hay que agregar a `~/.zshrc`, despues de
 `compinit` si lo usas:
 
 ```bash

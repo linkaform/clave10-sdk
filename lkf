@@ -289,7 +289,7 @@ _install(){
     ln -s "$self" "$link"
     echo "ok  $link -> $self"
   fi
-  # El rc depende del shell de login: en macOS es zsh, que no lee ~/.bashrc.
+  # El rc depende del shell de login: zsh no lee ~/.bashrc.
   local rc="~/.bashrc"
   [[ "$(basename "${SHELL:-}")" == "zsh" ]] && rc="~/.zshrc"
   case ":$PATH:" in
