@@ -5,7 +5,7 @@
 Orquestador sobre addons/lkf workon y lkf-sanic-apps/lkf workon, cada uno con
 su propio secrets/current_env. Ambos soportan local, preprod y prod.
 
-    ./lkf workon <local|preprod|prod>
+    ./lkf workon <local|preprod|prod|sbx-dev0|sbx-preprod|sbx-josepato0>
     ./lkf workon            # muestra el environment actual de ambos repos
 """
 import os

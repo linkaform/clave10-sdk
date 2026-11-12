@@ -11,7 +11,7 @@ set -u
 _usage(){
   APP=$(basename "$0")
       echo
-      echo "Usage: $APP <start|stop|workwith|workon|install> [args]"
+      echo "Usage: $APP <start|stop|workwith|workon|restore-mongo|install> [args]"
       echo
       echo "    $APP start                        Levanta el stack completo (docker compose up -d)"
       echo "    $APP start <servicio>...          Levanta solo esos servicios; si ya estan arriba, los reinicia (stop + start)"
@@ -26,8 +26,12 @@ _usage(){
       echo
       echo "    $APP workwith <domain_name>       Elige la cuenta activa en addons y lkf-sanic-apps"
       echo "    $APP workwith                     Muestra el estado de ambos repos"
-      echo "    $APP workon <local|preprod|prod>  Elige el environment activo en ambos repos"
+      echo "    $APP workon <local|preprod|prod|sbx-dev0|sbx-preprod|sbx-josepato0>  Elige el environment activo en ambos repos"
       echo "    $APP workon                       Muestra el environment actual de ambos repos"
+      echo
+      echo "    $APP restore-mongo [account_id]   Copia la base de una cuenta de produccion a tu sandbox (sbx-*):"
+      echo "                                      corre dentro de lkf-addons; la clave de mongo sale del back por apikey"
+      echo "                                      (--check solo prueba conexion; --dry-run muestra el plan)"
       echo
       echo "    $APP install [-y]                 Deja 'lkf' en ~/bin (corre desde cualquier carpeta) y activa el"
       echo "                                      autocompletado con TAB en bash/zsh (~/.bash_completion.d/lkf)"
@@ -353,6 +357,12 @@ case "$Acction" in
     exit $?
   ;;
 
+  restore-mongo)
+    shift
+    python3 "$Repo_root/bin/restore_mongo.py" ${@+"$@"}
+    exit $?
+  ;;
+
   install)
     shift
     _install ${@+"$@"}
@@ -365,7 +375,7 @@ case "$Acction" in
 
   *)
     echo "ERROR: accion desconocida: '$Acction'"
-    echo "       este lkf de la raiz solo sabe start, stop, workwith, workon e install."
+    echo "       este lkf de la raiz solo sabe start, stop, workwith, workon, restore-mongo e install."
     _usage
   ;;
 esac

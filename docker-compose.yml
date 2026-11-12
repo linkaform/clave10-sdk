@@ -52,6 +52,10 @@ services:
     container_name: lkf-addons
     hostname: lkf-addons
     image: linkaform/addons:develop
+    # Mismo uid que el `nonroot` del stage develop del Dockerfile y que el usuario
+    # del host. La imagen publicada termina en www-data (33), que no puede escribir
+    # en addons/modules (carpetas del host) y hace fallar `lkfaddons download`.
+    user: "1000:1000"
     build:
       context: ./addons
       dockerfile: ./Dockerfile

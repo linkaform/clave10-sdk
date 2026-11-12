@@ -26,7 +26,7 @@ _lkf() {
     COMPREPLY=()
 
     if [[ $COMP_CWORD -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "start stop workwith workon install -h --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "start stop workwith workon restore-mongo install -h --help" -- "$cur"))
         return 0
     fi
 
@@ -39,10 +39,13 @@ _lkf() {
             COMPREPLY=($(compgen -W "$_lkf_services" -- "$cur"))
             ;;
         workon)
-            [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=($(compgen -W "local preprod prod" -- "$cur"))
+            [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=($(compgen -W "local preprod prod sbx-dev0 sbx-preprod sbx-josepato0" -- "$cur"))
             ;;
         workwith)
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=($(compgen -W "$(_lkf_domains "$1")" -- "$cur"))
+            ;;
+        restore-mongo)
+            COMPREPLY=($(compgen -W "--check --dry-run --with-admin --source -y --yes -h --help" -- "$cur"))
             ;;
         install)
             COMPREPLY=($(compgen -W "-y" -- "$cur"))
