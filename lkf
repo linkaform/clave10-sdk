@@ -342,12 +342,17 @@ case "$Acction" in
   workwith)
     shift
     if python3 "$Repo_root/bin/workwith.py" ${@+"$@"}; then
-      # El mini-back lee account_id de addons/secrets/current_domain al arrancar.
-      # Tras cambiar la cuenta, refrescar solo ese proceso; addons y Sanic leen
-      # los archivos montados y no requieren reinicio.
-      if [[ $# -gt 0 ]] && docker inspect -f '{{.State.Running}}' lkf-miniback 2>/dev/null | grep -qx true; then
-        echo "Reiniciando lkf-miniback para cargar la cuenta activa..."
-        docker restart lkf-miniback >/dev/null
+      # El mini-back y el servidor Sanic (8010) leen la cuenta activa al arrancar:
+      # Sanic crea sus servicios globales una vez (addons/*/routes.py), asi que
+      # sin reinicio sigue consultando la cuenta anterior. lkf-addons no hace
+      # falta: sus scripts corren por docker exec y leen los archivos montados.
+      if [[ $# -gt 0 ]]; then
+        for c in lkf-miniback lkf-sanic-app; do
+          if docker inspect -f '{{.State.Running}}' "$c" 2>/dev/null | grep -qx true; then
+            echo "Reiniciando $c para cargar la cuenta activa..."
+            docker restart "$c" >/dev/null
+          fi
+        done
       fi
     else
       exit $?
