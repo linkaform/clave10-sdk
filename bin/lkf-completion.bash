@@ -26,7 +26,7 @@ _lkf() {
     COMPREPLY=()
 
     if [[ $COMP_CWORD -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "start stop workwith workon restore-mongo install -h --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "start stop workwith workon restore-mongo restore-couch install -h --help" -- "$cur"))
         return 0
     fi
 
@@ -46,6 +46,9 @@ _lkf() {
             ;;
         restore-mongo)
             COMPREPLY=($(compgen -W "--check --dry-run --with-admin --source -y --yes -h --help" -- "$cur"))
+            ;;
+        restore-couch)
+            COMPREPLY=($(compgen -W "--check --dry-run --with-imagenes --source -y --yes -h --help" -- "$cur"))
             ;;
         install)
             COMPREPLY=($(compgen -W "-y" -- "$cur"))

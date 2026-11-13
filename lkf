@@ -11,7 +11,7 @@ set -u
 _usage(){
   APP=$(basename "$0")
       echo
-      echo "Usage: $APP <start|stop|workwith|workon|restore-mongo|install> [args]"
+      echo "Usage: $APP <start|stop|workwith|workon|restore-mongo|restore-couch|install> [args]"
       echo
       echo "    $APP start                        Levanta el stack completo (docker compose up -d)"
       echo "    $APP start <servicio>...          Levanta solo esos servicios; si ya estan arriba, los reinicia (stop + start)"
@@ -32,6 +32,10 @@ _usage(){
       echo "    $APP restore-mongo [account_id]   Copia la base de una cuenta de produccion a tu sandbox (sbx-*):"
       echo "                                      corre dentro de lkf-addons; la clave de mongo sale del back por apikey"
       echo "                                      (--check solo prueba conexion; --dry-run muestra el plan)"
+      echo
+      echo "    $APP restore-couch [account_id]   Replica las bases CouchDB de una cuenta de produccion a tu sandbox (sbx-*):"
+      echo "                                      corre dentro de lkf-addons; credenciales de accounts.ini (couch_*)"
+      echo "                                      (--check solo prueba conexion; --dry-run muestra el plan; --with-imagenes)"
       echo
       echo "    $APP install [-y]                 Deja 'lkf' en ~/bin (corre desde cualquier carpeta) y activa el"
       echo "                                      autocompletado con TAB en bash/zsh (~/.bash_completion.d/lkf)"
@@ -363,6 +367,12 @@ case "$Acction" in
     exit $?
   ;;
 
+  restore-couch)
+    shift
+    python3 "$Repo_root/bin/restore_couch.py" ${@+"$@"}
+    exit $?
+  ;;
+
   install)
     shift
     _install ${@+"$@"}
@@ -375,7 +385,7 @@ case "$Acction" in
 
   *)
     echo "ERROR: accion desconocida: '$Acction'"
-    echo "       este lkf de la raiz solo sabe start, stop, workwith, workon, restore-mongo e install."
+    echo "       este lkf de la raiz solo sabe start, stop, workwith, workon, restore-mongo, restore-couch e install."
     _usage
   ;;
 esac
