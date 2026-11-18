@@ -26,7 +26,7 @@ _lkf() {
     COMPREPLY=()
 
     if [[ $COMP_CWORD -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "start stop workwith workon restore-mongo restore-couch install -h --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "start stop workwith workon restore-mongo restore-couch restore-psql install -h --help" -- "$cur"))
         return 0
     fi
 
@@ -45,10 +45,13 @@ _lkf() {
             [[ $COMP_CWORD -eq 2 ]] && COMPREPLY=($(compgen -W "$(_lkf_domains "$1")" -- "$cur"))
             ;;
         restore-mongo)
-            COMPREPLY=($(compgen -W "--check --dry-run --with-admin --source -y --yes -h --help" -- "$cur"))
+            COMPREPLY=($(compgen -W "--check --dry-run --with-admin --exclude --include --no-menu --source -y --yes -h --help" -- "$cur"))
             ;;
         restore-couch)
             COMPREPLY=($(compgen -W "--check --dry-run --with-imagenes --source -y --yes -h --help" -- "$cur"))
+            ;;
+        restore-psql)
+            COMPREPLY=($(compgen -W "--dry-run --no-reset-passwords --password-user -y --yes -h --help" -- "$cur"))
             ;;
         install)
             COMPREPLY=($(compgen -W "-y" -- "$cur"))

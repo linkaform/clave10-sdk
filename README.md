@@ -183,6 +183,49 @@ docker compose exec lkf-addons bash
 docker compose exec lkf-sanic-app bash
 ```
 
+## Restaurar ambientes de pruebas
+
+Tres acciones de `lkf` copian datos de **produccion** a tu sandbox (`sbx-dev0`,
+`sbx-preprod`, `sbx-josepato0`). El destino sale siempre de `lkf workon`; si el
+ambiente activo no es un `sbx-*` se niegan a correr (nunca tocan local, preprod ni
+prod). Todas piden teclear el nombre del ambiente antes de borrar nada (`-y` lo omite)
+y tienen `--dry-run`.
+
+```bash
+./lkf workon sbx-preprod          # 1. elige el sandbox destino
+./lkf workwith <dominio>          # 2. elige la cuenta (para mongo y couch)
+
+./lkf restore-mongo --check       # prueba credenciales; no borra nada
+./lkf restore-mongo               # MongoDB de la cuenta -> sandbox
+./lkf restore-couch               # bases CouchDB de la cuenta -> sandbox
+./lkf restore-psql --dry-run      # PostgreSQL de produccion -> sandbox
+```
+
+| Accion | Que copia | Donde corre | Requisitos |
+| ------ | --------- | ----------- | ---------- |
+| `restore-mongo [account_id]` | La base `infosync_answers_client_<id>` | Dentro de `lkf-addons` (`./lkf start lkf-addons`) | `accounts.ini` de la cuenta (el password de mongo lo da el endpoint del back con tu apikey) |
+| `restore-couch [account_id]` | Las bases CouchDB de la cuenta (`--with-imagenes` suma `imagenes`) | Dentro de `lkf-addons` | Credenciales `couch_*` en `accounts.ini` |
+| `restore-psql` | La base PostgreSQL de produccion | En tu maquina, por SSH | SSH a produccion (`sudo -u postgres pg_dump`) y a la VM de sandbox |
+
+**restore-mongo.** Con terminal interactiva abre un menu para marcar o desmarcar
+collections (con su tamano). Por defecto omite las pesadas: `answer_version`,
+`form_answer_archived`, `Tableau`, `download_history`, `pacos`, `report_answer`. Tu
+ultima seleccion se recuerda por cuenta en `secrets/restore_mongo.json` (local, no se
+versiona). Sin menu: `--exclude a,b`, `--include c`, `--no-menu` o `-y` (precedencia:
+flags > ultima seleccion > defaults). `--with-admin` copia tambien la base `admin`
+(necesita `mongo_user`/`mongo_password` en `accounts.ini`). Borra la base de la cuenta
+en el sandbox antes de restaurar.
+
+**restore-psql.** El contenedor destino es `<ambiente>-postgres-1` en la VM de
+sandbox (`sbx-preprod` -> `preprod-postgres-1`). La base destino es `infosync_qa`
+(`--db` o `LKF_PSQL_DB` para otra). Hace `DROP`/`CREATE` de esa base, carga el dump por
+stream y, al final, iguala el password de todos los usuarios al del usuario `126`
+(`--password-user` cambia el id, `--no-reset-passwords` lo omite). SSH usa tu usuario
+local o lo que tengas en `~/.ssh/config`; la primera vez acepta la huella de
+`vmsandbox0.lkf.cloud` con `ssh vmsandbox0.lkf.cloud true`. Variables opcionales:
+`LKF_PSQL_PROD_SSH` (default `10.128.10.121`), `LKF_PSQL_SANDBOX_SSH` (default
+`vmsandbox0.lkf.cloud`), `LKF_PSQL_PROD_DB` (default `infosync`).
+
 ## Puertos
 
 | Servicio        | Host   | Contenedor |
