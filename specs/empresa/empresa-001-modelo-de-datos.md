@@ -15,7 +15,7 @@ Es la parte de F0-01 que desbloquea todo lo demás del plan (F0-02, F0-03, F0-08
 
 **Dentro:**
 
-- Convenciones comunes: dónde viven los datos, nombres de formas, catálogos, folios, estatus y fechas.
+- Convenciones comunes: dónde viven los datos, nombres de formas, referencias entre formas, folios, estatus y fechas.
 - Cómo se resuelve "Mi Empresa" del usuario que entra.
 - Forma **Empresas** con contactos, registros patronales y actividades STPS.
 - Campos nuevos en la forma **Empleados** existente para el personal de una empresa contratista.
@@ -30,13 +30,13 @@ Es la parte de F0-01 que desbloquea todo lo demás del plan (F0-02, F0-03, F0-08
 
 ## Convenciones comunes (aplican a las tres specs)
 
-1. **Todo en LinkaForm, dentro de la cuenta del cliente.** Cada entidad es una forma (registros en Mongo) y, si otra forma la referencia, también un catálogo alimentado por esa forma. No hay base de datos aparte ni cuenta propia por empresa.
+1. **Todo en LinkaForm, dentro de la cuenta del cliente.** Cada entidad es una forma (registros en Mongo). No hay base de datos aparte ni cuenta propia por empresa.
 2. **Todas las empresas son registros de la misma forma.** La empresa dueña de la cuenta, sus clientes, sus contratistas y los subcontratistas son registros de **Empresas**. Si un contratista trabaja para dos cuentas distintas, existe una vez en cada cuenta (consecuencia del punto 1).
-3. **Back único en Sanic, dentro de `accesos`.** Ids de formas y campos en `lkf-sanic-apps/addons/accesos/models.py` (`self.lkm.form_id(...)`), lógica en `service.py`, rutas `/accesos/...` en `routes.py`. En `addons` solo van los XML de formas y catálogos y, si hace falta, puentes sin lógica para workflows.
+3. **Back único en Sanic, dentro de `accesos`.** Ids de formas en `lkf-sanic-apps/addons/accesos/models.py` (`self.lkm.form_id(...)`) y de campos en `accesos/contratistas_fields.py` (`self.ctr_f[<forma>][<clave>]`), lógica en `service.py`, rutas `/accesos/...` en `routes.py`. En `addons` solo van los XML de las formas (`accesos/items/forms/Seguridad/Contratistas/`) y, si hace falta, puentes sin lógica para workflows. Los XML y `contratistas_fields.py` se generan desde la definición de estas specs con un script, para no editarlos a mano.
 4. **Nombres que no chocan.** Ninguna forma nueva se llama "Contratistas" (la usa `produccion_pci`), "Configuración de perfiles" (es de pases en accesos) ni "Definición de requerimientos" (existe en otra cuenta). Los nombres de forma de cada spec son los definitivos para F0-02.
 5. **Campos.** En esta spec cada campo se nombra con su clave (`snake_case`), que es la que usa `self.f[...]` en Sanic y la propiedad del objeto en el front. El `field_id` lo asigna F0-02 al crear la forma.
-6. **Relaciones entre formas** van por campo de catálogo (el patrón normal de LinkaForm). En el back se guarda siempre el `_id` del registro referenciado además del texto que muestra el catálogo; las búsquedas y agregaciones usan el `_id`, nunca el texto.
-7. **Grupos repetibles** para listas que solo existen dentro de su registro (contactos, versiones de un documento, renglones de un contrato). Si algo se consulta por sí solo en varias pantallas o cruza registros, va en su propia forma.
+6. **Referencias entre formas por `_id`, sin catálogos** (decisión de F0-02, 2026-11-18). LinkaForm no deja usar el mismo catálogo dos veces en una forma, y el modelo lo necesita (cliente y contratista, servicios/perfiles/equipos, examen y otorga). Una referencia son dos campos de texto: `<clave>_id` con el `_id` del registro y `<clave>` con su nombre visible; los escribe el back. Una lista de referencias es un grupo repetible con `<clave>_id` y `<clave>_nombre`. Todo se captura desde Clave10 vía Sanic, así que no hacen falta catálogos ni workflows de sincronización; las búsquedas y agregaciones usan el `_id`.
+7. **Grupos repetibles** para listas que solo existen dentro de su registro (contactos, versiones de un documento, renglones de un contrato). Si algo se consulta por sí solo en varias pantallas o cruza registros, va en su propia forma. Lo que en estas specs aparece como «grupo (no repetible)» se guarda aplanado con prefijo (`domicilio_cp`, `acta_notario`, `repse_fin`…); el back lo regresa anidado como en los tipos del front.
 8. **Folios.** Prefijo por entidad más consecutivo de la cuenta: Empresa cliente `CL-0001`, contratista `CT-0001`, contrato `C-0001`, documento `D-0001`, empleado `E-0001`. Lo pone el back al crear; no se captura.
 9. **Estatus calculados por el back.** Si un estatus depende de fechas o de otros registros (Por vencer, Vencido, % de cumplimiento), lo calcula el back y lo guarda; el front no lo deduce. Así las listas filtran y ordenan en Mongo.
 10. **Fechas** en ISO (`YYYY-MM-DD`; con hora, `YYYY-MM-DD HH:MM:SS`) en la zona del usuario, como el resto de Clave10.
@@ -51,7 +51,7 @@ Es la parte de F0-01 que desbloquea todo lo demás del plan (F0-02, F0-03, F0-08
 
 ## Modelo de datos
 
-### Forma **Empresas** (catálogo `empresas`)
+### Forma **Empresas**
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
@@ -82,7 +82,6 @@ Notas:
 - El **representante legal** que muestran las listas es el primer contacto con rol `Representante legal`; no hay un campo aparte.
 - El **dominio** (`xxx.clave10.com`) del registro queda fuera hasta que exista alta de cuenta independiente.
 - Que una empresa sea cliente o contratista de otra **no** es un campo de Empresas: lo dice la relación (SPEC relaciones-001). Una misma empresa puede ser cliente de una y contratista de otra.
-- El catálogo `empresas` expone `razon_social`, `rfc` y `folio`.
 
 ### Forma **Empleados** (existente) — campos nuevos
 
@@ -90,11 +89,11 @@ La forma ya tiene nombre, foto, RFC, CURP, NSS, nacimiento, género, domicilio, 
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
-| `empresa` | catálogo `empresas` | vacío = empresa propia |
+| `empresa_id` / `empresa` | referencia a Empresas | vacía = empresa propia |
 | `registro_patronal` | texto | NRP de la empresa con el que está dado de alta |
 | `salario_base_cotizacion` | número | SBC |
 | `alta_imss` | fecha | |
-| `perfiles` | catálogo `recursos_de_contrato` (filtrado a `tipo = Perfil`), múltiple | definido en SPEC contratos-001 |
+| `perfiles` | lista de referencias a Recursos de contrato (`tipo = Perfil`) | definido en SPEC contratos-001 |
 | `disponible_para_contratos` | casilla | |
 | `vetado` | grupo (no repetible) | `fecha`, `motivo`, `por` |
 
@@ -146,7 +145,7 @@ interface EmpleadoContratista {
 ## Plan de implementación
 
 1. **Revisión de esta spec** con Maricruz (revisora de F0-01) junto con relaciones-001 y contratos-001.
-2. **F0-02** crea la forma Empresas y su catálogo, agrega los campos a Empleados (subiendo su `updated_at`) y registra los ids en `accesos/models.py`. Prueba: `lkfaddons install` en una cuenta de pruebas sin errores y la forma Empleados sigue guardando registros viejos.
+2. **F0-02** crea la forma Empresas, agrega los campos a Empleados (subiendo su `updated_at`) y registra los ids en `accesos/models.py`. Prueba: `lkfaddons install` en una cuenta de pruebas sin errores y la forma Empleados sigue guardando registros viejos.
 3. **Registro de la empresa propia** en cada cuenta al instalar (uno con `es_propia = sí`, con la razón social de la cuenta). Lo hace F0-02 con un script idempotente.
 4. **F0-08** escribe estos tipos en el front y sus mocks.
 
@@ -165,6 +164,7 @@ interface EmpleadoContratista {
 - **Sí:** reusar la forma **Empleados** con un campo `empresa`. Ya tiene casi todos los datos del diseño y así el personal del contratista sirve después para pases y check-in. **No** una forma nueva de empleados de contratista.
 - **No** reusar Clientes, Proveedores ni el catálogo `compaia` de base: tienen otro uso y pocos campos.
 - **No** tocar la forma ni el catálogo "Contratistas" de addons: los usa `produccion_pci`. Tampoco el módulo viejo `addons/contratistas` de Sanic.
+- **Sí:** referencias por `_id` y sin catálogos en todas las formas nuevas (ver convención 6). **No** catálogos: chocan cuando una forma usa el mismo dos veces y obligan a mantener workflows de sincronización.
 - **Sí:** estatus calculados guardados por el back, para filtrar y ordenar en Mongo.
 - **Sí:** representante legal = contacto con ese rol, no un campo suelto.
 

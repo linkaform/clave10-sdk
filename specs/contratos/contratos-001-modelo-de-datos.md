@@ -9,7 +9,7 @@
 
 ## Por qué existe esta spec
 
-Es la parte más grande de F0-01: casi todas las pantallas del plan (Mi Empresa, contratos, matrices, configuración) leen estas entidades. Fijar aquí los estados y las reglas que el diseño deja abiertas evita que cada tarea las invente distinto. Las convenciones comunes (formas en la cuenta del cliente, catálogos, folios, estatus calculados) están en SPEC empresa-001.
+Es la parte más grande de F0-01: casi todas las pantallas del plan (Mi Empresa, contratos, matrices, configuración) leen estas entidades. Fijar aquí los estados y las reglas que el diseño deja abiertas evita que cada tarea las invente distinto. Las convenciones comunes (formas en la cuenta del cliente, referencias por `_id`, folios, estatus calculados) están en SPEC empresa-001.
 
 ## Alcance
 
@@ -48,7 +48,7 @@ Tanto contratos como requerimientos (examen e inspección) y sesiones usan el mi
 | `cada_n` / `unidad` | número / select | Configurable: `día` \| `semana` \| `mes` \| `año` |
 | `hora_desde` / `hora_hasta` | hora | default 07:00–16:00 |
 
-### Forma **Recursos de contrato** (catálogo `recursos_de_contrato`)
+### Forma **Recursos de contrato**
 
 Una sola forma para los tres catálogos de CF-02.
 
@@ -59,10 +59,10 @@ Una sola forma para los tres catálogos de CF-02.
 | `descripcion` | texto largo | |
 | `categoria` | select | categorías de servicio o de equipo según `tipo`; vacío en Perfil |
 | `clase` | select | solo Equipo: `Equipo` \| `Vehículo` \| `Herramienta` |
-| `requerimientos` | catálogo `requerimientos_de_cumplimiento`, múltiple | Perfil solo acepta ámbito `Persona`; Equipo solo `Equipo`; Servicio cualquiera |
+| `requerimientos` | lista de referencias a Requerimientos | Perfil solo acepta ámbito `Persona`; Equipo solo `Equipo`; Servicio cualquiera |
 | `estatus` | select | `Activo` \| `Inactivo` |
 
-### Forma **Requerimientos de cumplimiento** (catálogo `requerimientos_de_cumplimiento`)
+### Forma **Requerimientos de cumplimiento**
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
@@ -90,25 +90,25 @@ Una sola forma para los tres catálogos de CF-02.
 
 Las obligaciones de ME-07 (SAT 32-D, IMSS, INFONAVIT, CFDI de nómina, DIOT, ICSOE, SISUB) son requerimientos de ámbito Empresa, modo periodo, con `requiere_acuse`. Se cargan como datos iniciales en F0-02, no son una forma aparte.
 
-### Forma **Contratos de servicio** (catálogo `contratos_de_servicio`)
+### Forma **Contratos de servicio**
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
 | `folio` | texto | `C-0001`, lo pone el back |
 | `numero_contrato` | texto | el folio propio del documento firmado (p. ej. `CPS/2026/014`), opcional |
-| `relacion` | catálogo `relaciones_entre_empresas` | requerido; de ahí salen beneficiario (`cliente`) y contratista |
+| `relacion` | referencia a Relaciones | requerido; de ahí salen beneficiario (`cliente`) y contratista |
 | `objeto` | texto | requerido |
 | `descripcion` | texto largo | |
 | `monto` | número | |
 | `inicio` / `fin` | fecha | requeridas, `fin` ≥ `inicio` |
-| `responsable` | catálogo de usuarios | quien administra el contrato del lado del cliente |
+| `responsable` | referencia a un usuario (id numérico de LinkaForm) | quien administra el contrato del lado del cliente |
 | `contrato_firmado` | archivo | PDF/JPG/PNG; lo lee F0-11 |
 | `permite_subcontratacion` | casilla | |
 | `servicios` | grupo repetible | `servicio` (recurso `Servicio`) |
-| `perfiles` | grupo repetible | `perfil` (recurso `Perfil`), `cantidad`, `requerimientos_excluidos` (catálogo múltiple) |
+| `perfiles` | grupo repetible | `perfil` (recurso `Perfil`), `cantidad`, `requerimientos_excluidos` (lista JSON de ids) |
 | `equipos` | grupo repetible | `equipo` (recurso `Equipo`), `cantidad`, `requerimientos_excluidos` |
-| `ubicaciones` | grupo repetible | `ubicacion` (catálogo de Ubicaciones existente), `estatus` (`Activa` \| `En apertura` \| `Inactiva`) |
-| `empleados` | grupo repetible | `empleado` (catálogo Empleados), `perfil` (recurso `Perfil`), `ubicacion`, `fecha_alta` |
+| `ubicaciones` | grupo repetible | `ubicacion` (referencia a Ubicaciones), `estatus` (`Activa` \| `En apertura` \| `Inactiva`) |
+| `empleados` | grupo repetible | `empleado` (referencia a Empleados), `perfil` (referencia a recurso `Perfil`), `ubicacion`, `fecha_alta` |
 | `recurrencia` | grupo `recurrencia` | cuándo se presta el servicio |
 | `estatus_manual` | select | vacío \| `Pausado` \| `Cancelado` |
 | `motivo_estatus` | texto | requerido si hay `estatus_manual` |
@@ -131,7 +131,7 @@ Un registro por cambio del contrato (lo escribe el back, no se captura):
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
-| `contrato` | catálogo `contratos_de_servicio` | |
+| `contrato` | referencia a Contratos | |
 | `evento` | select | `Creación` \| `Ubicaciones` \| `Perfiles` \| `Equipos` \| `Servicios` \| `Empleados` \| `Monto` \| `Vigencia` \| `Estatus` \| `Pausa` \| `Reanudación` \| `Cancelación` \| `Modificatorio` |
 | `detalle` | texto | resumen legible ("Monto: 120,000 → 150,000") |
 | `antes` / `despues` | texto (JSON) | valores de los campos que cambiaron |
@@ -145,18 +145,18 @@ Un registro por cambio del contrato (lo escribe el back, no se captura):
 | `folio` | texto | `D-0001` |
 | `nombre` | texto | |
 | `categoria` | select | categorías de documento de ME-06 |
-| `requerimiento` | catálogo `requerimientos_de_cumplimiento` | el requerimiento que cumple; vacío = documento suelto sin mapear |
+| `requerimiento` | referencia a Requerimientos | el requerimiento que cumple; vacío = documento suelto sin mapear |
 | `dueno_tipo` | select | `Empresa` \| `Persona` \| `Equipo` (igual que `ambito`) |
-| `dueno_empresa` | catálogo `empresas` | siempre: la empresa dueña del documento (o la del empleado o equipo) |
-| `dueno_empleado` | catálogo Empleados | si `dueno_tipo = Persona` |
-| `dueno_equipo` | texto (id) | si `dueno_tipo = Equipo`; apunta al activo de ME-08 |
+| `dueno_empresa` | referencia a Empresas | siempre: la empresa dueña del documento (o la del empleado o equipo) |
+| `dueno_empleado` | referencia a Empleados | si `dueno_tipo = Persona` |
+| `dueno_equipo` | referencia (id) | si `dueno_tipo = Equipo`; apunta al activo de ME-08 |
 | `periodo` | grupo (no repetible) | `clave` (`2026-05`, `2026-C2`…), `inicio`, `fin`; solo si el requerimiento es por periodo |
 | `en_ceros` | casilla | acuse de declaración en ceros (ME-07) |
 | `vigencia_inicio` / `vigencia_fin` | fecha | `vigencia_fin` vacía = permanente |
 | `archivo` | archivo | la versión actual |
 | `estatus` | select, calculado | `Por revisar` \| `Aceptado` \| `Rechazado` \| `Vencido` |
-| `compartido_con` | catálogo `empresas`, múltiple | clientes que pueden verlo y aprobarlo |
-| `contratos` | catálogo `contratos_de_servicio`, múltiple | contratos a los que se ligó |
+| `compartido_con` | lista de referencias a Empresas | clientes que pueden verlo y aprobarlo |
+| `contratos` | lista de referencias a Contratos | contratos a los que se ligó |
 | `origen` | select | `Carga` \| `Carga masiva` \| `Sesión` (otorgado al aprobar una capacitación) |
 | `lectura_ia` | texto (JSON) | resultado de F0-11: confianza por campo, propietario y requerimiento sugeridos, conflictos |
 | `versiones` | grupo repetible | `numero`, `archivo`, `estatus`, `subido_por`, `fecha`, `motivo_rechazo` |
@@ -174,14 +174,14 @@ La materialización que leen las matrices (MX-01, MX-04, ME-07, pestaña Requeri
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
-| `relacion` | catálogo `relaciones_entre_empresas` | el cliente que exige |
-| `contrato` | catálogo `contratos_de_servicio` | vacío si viene de una asignación a la relación y no de un contrato |
-| `requerimiento` | catálogo `requerimientos_de_cumplimiento` | |
+| `relacion` | referencia a Relaciones | el cliente que exige |
+| `contrato` | referencia a Contratos | vacío si viene de una asignación a la relación y no de un contrato |
+| `requerimiento` | referencia a Requerimientos | |
 | `limitante` | casilla | copia del requerimiento al generar la fila |
 | `sujeto_tipo` | select | `Empresa` \| `Persona` \| `Equipo` |
-| `sujeto_empresa` / `sujeto_empleado` / `sujeto_equipo` | catálogo / catálogo / texto (id) | según `sujeto_tipo`; `sujeto_empresa` siempre lleno |
+| `sujeto_empresa` / `sujeto_empleado` / `sujeto_equipo` | referencia / referencia / referencia | según `sujeto_tipo`; `sujeto_empresa` siempre lleno |
 | `periodo` | grupo (no repetible) | `clave`, `inicio`, `fin`, `vence` |
-| `documento` | catálogo `documentos_de_cumplimiento` | el documento que lo cubre, si hay |
+| `documento` | referencia a Documentos | el documento que lo cubre, si hay |
 | `estado` | select, calculado | ver abajo |
 | `estado_manual` / `motivo_manual` | select / texto | lo que el diseño llama `ccOv`: un revisor fija `No aplica` o corrige el estado con motivo |
 
@@ -214,12 +214,12 @@ La materialización que leen las matrices (MX-01, MX-04, ME-07, pestaña Requeri
 | `hora_inicio` / `hora_fin` | hora | |
 | `recurrencia` | grupo `recurrencia` | opcional; con `repetir_hasta` (fecha) |
 | `lugar` / `enlace` | texto | la modalidad se deduce: lugar = Presencial, enlace = Virtual, ambos = Híbrida |
-| `areas` | catálogo de Áreas, múltiple | |
+| `areas` | lista de referencias a Áreas | |
 | `cupo` | número | |
-| `examen` | catálogo `requerimientos_de_cumplimiento` (tipo Examen) | opcional |
-| `otorga` | catálogo `requerimientos_de_cumplimiento` | requerimiento que se cumple al aprobar |
+| `examen` | referencia a Requerimientos (tipo Examen) | opcional |
+| `otorga` | referencia a Requerimientos | requerimiento que se cumple al aprobar |
 | `temario` | grupo repetible | `tema`, `leccion`, `minutos`, `material_tipo` (`Video` \| `Lectura` \| `Presentación` \| `Cuestionario` \| `Clase en vivo`), `material_origen` (`Archivo` \| `Enlace`), `material` (archivo o URL) |
-| `participantes` | grupo repetible | `empleado` (catálogo Empleados), `asistencia` (texto JSON: fecha → `Asistió` \| `Faltó`), `calificacion`, `resultado` (`Aprobado` \| `No aprobado` \| vacío) |
+| `participantes` | grupo repetible | `empleado` (referencia a Empleados), `asistencia` (texto JSON: fecha → `Asistió` \| `Faltó`), `calificacion`, `resultado` (`Aprobado` \| `No aprobado` \| vacío) |
 | `cancelada` / `motivo_cancelacion` | casilla / texto | |
 | `estatus` | select, calculado | `Programada` \| `En curso` \| `Finalizada` \| `Cancelada` |
 
@@ -333,7 +333,7 @@ interface Sesion {
 ## Plan de implementación
 
 1. **Revisión** de esta spec con Maricruz junto con empresa-001 y relaciones-001.
-2. **F0-02** crea las siete formas y sus catálogos, carga los requerimientos iniciales de ME-07 y registra los ids en `accesos/models.py`. Prueba: instalar en una cuenta de pruebas y capturar un registro de cada forma a mano.
+2. **F0-02** crea las siete formas, carga los requerimientos iniciales de ME-07 y registra los ids en `accesos/models.py`. Prueba: instalar en una cuenta de pruebas y capturar un registro de cada forma a mano.
 3. **ME-14** implementa contratos e historial; **ME-15** el motor de cumplimiento y los estatus calculados; **CF-01/02/03** la configuración; **F0-11** la lectura con IA.
 4. **F0-08** escribe los tipos y los mocks.
 
