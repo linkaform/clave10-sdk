@@ -15,7 +15,7 @@ En el diseño, Clientes y Contratistas son dos menús con la misma pantalla. Par
 
 **Dentro:**
 
-- Forma **Relaciones entre empresas** y su catálogo.
+- Forma **Relaciones entre empresas**.
 - Cómo se calcula la vista Clientes y la vista Contratistas de la empresa activa.
 - Subcontratación: `relacion_padre`, validación de ciclos y nivel máximo.
 - Datos calculados que muestran las listas (número de contratos, % de cumplimiento, vigencia del REPSE).
@@ -29,19 +29,19 @@ En el diseño, Clientes y Contratistas son dos menús con la misma pantalla. Par
 
 ## Modelo de datos
 
-### Forma **Relaciones entre empresas** (catálogo `relaciones_entre_empresas`)
+### Forma **Relaciones entre empresas**
 
 | Clave | Tipo | Notas |
 | --- | --- | --- |
 | `folio` | texto | `R-0001`, lo pone el back |
-| `cliente` | catálogo `empresas` | requerido; la empresa que recibe el servicio |
-| `contratista` | catálogo `empresas` | requerido; la empresa que lo presta; distinta de `cliente` |
-| `relacion_padre` | catálogo `relaciones_entre_empresas` | vacío = relación directa; lleno = subcontratación (ver abajo) |
+| `cliente_id` / `cliente` | referencia a Empresas | requerido; la empresa que recibe el servicio |
+| `contratista_id` / `contratista` | referencia a Empresas | requerido; la empresa que lo presta; distinta de `cliente` |
+| `relacion_padre_id` / `relacion_padre` | referencia a Relaciones | vacío = relación directa; lleno = subcontratación (ver abajo) |
 | `nivel` | número, calculado | 1 = directa; `nivel` del padre + 1 |
 | `estatus` | select | `Activo` \| `Inactivo` |
 | `fecha_alta` | fecha | |
 | `notas` | texto largo | |
-| `requerimientos_asignados` | catálogo `requerimientos_de_cumplimiento`, múltiple | requerimientos de ámbito Empresa que el cliente le exige al contratista fuera de un contrato (MX-05); por defecto los `limitante` |
+| `requerimientos_asignados` | lista de referencias a Requerimientos | requerimientos de ámbito Empresa que el cliente le exige al contratista fuera de un contrato (MX-05); por defecto los `limitante` |
 | `num_contratos` | número, calculado | contratos de la relación que no están `Cancelado` |
 | `cumplimiento_pct` | número, calculado | ver SPEC contratos-001, "Cumplimiento" |
 
@@ -97,7 +97,7 @@ interface RelacionFila {
 ## Plan de implementación
 
 1. **Revisión** de esta spec con Maricruz junto con empresa-001 y contratos-001.
-2. **F0-02** crea la forma y el catálogo, y registra los ids en `accesos/models.py`.
+2. **F0-02** crea la forma y registra los ids en `accesos/models.py`.
 3. **R-01** implementa list/get/create/update/change_status con `direccion`, las reglas de unicidad y el cálculo de `num_contratos`.
 4. **R-03** implementa las validaciones de subcontratación y el endpoint de árbol.
 
