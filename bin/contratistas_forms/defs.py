@@ -160,6 +160,12 @@ FORMS = [
             IMG("logo", "Logo"),
             YN("es_propia", "Es la empresa de la cuenta", help="Solo una por cuenta."),
             SEL("estatus", "Estatus", ESTATUS, req=True),
+            # Registro (RG-01)
+            SEL("perfil_registro", "Perfil de registro", ["Cliente", "Contratista"],
+                help="Con qué perfil se registró la empresa."),
+            T("dominio", "Dominio", help="Subdominio reservado (xxx.clave10.com); aún no se configura."),
+            DT("terminos_aceptados_fecha", "Términos aceptados · fecha"),
+            T("terminos_version", "Términos aceptados · versión"),
         ],
     ),
     dict(
