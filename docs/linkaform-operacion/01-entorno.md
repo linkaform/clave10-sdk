@@ -118,3 +118,28 @@ docker exec -it lkf-addons lkfaddons <accion> -m <modulo> -i <items> [-id <ids>]
   `demo` de todo lo que instale.
 - Todo `install -m <mod>` corre primero las **migraciones** de ese módulo.
   Normalmente no pasa nada, pero tenlo presente.
+
+### Instalar scripts
+
+Los scripts de `modules/<mod>/items/scripts/` corren en LinkaForm, no en tu
+contenedor. Un cambio en un script no llega a la cuenta hasta instalarlo:
+
+```bash
+lkf workwith <dominio>
+docker exec -i lkf-addons sh -c 'yes y | lkfaddons install -m accesos -i scripts'
+docker exec -i lkf-addons sh -c 'yes y | lkfaddons install -m accesos -i scripts reports'   # también reportes
+```
+
+- Solo sube los scripts que cambiaron, pero sube **todo** lo distinto en la
+  rama de la cuenta, incluido lo que llegó de `master` con el merge de
+  `workwith`. Antes, revisa qué cambió hace poco en los scripts de esa rama:
+  `git -C ~/clave10-sdk/addons/modules log --oneline -10 -- <mod>/items/scripts`.
+  Si ves cambios que no conoces, pregúntale a Paco antes de instalar.
+- Los reportes (`items/reports/`) no entran con `-i scripts` solo; hay que agregar `reports`.
+- Tarda unos segundos a un minuto en verse en la app. Si sigue saliendo lo
+  viejo, espera y recarga antes de reinstalar.
+- Esto **no** actualiza el código de `lkf_addons` (`app.py`, `model.py`):
+  eso viaja en la imagen del contenedor y lo actualiza Paco con `update prod`.
+  Si el arreglo está en `app.py`, instalar scripts no lo arregla.
+- Una cuenta a la vez. Después de instalar, prueba el flujo en la app o en el
+  front antes de pasar a la siguiente.

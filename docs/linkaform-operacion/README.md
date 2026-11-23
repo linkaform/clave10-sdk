@@ -40,7 +40,8 @@ addons/modules  (rama por cuenta: account_<id>)  Mongo infosync_answers_client_<
 | Leer Mongo y la API de cualquier cuenta | Deploy o update de Sanic |
 | Instalar **una** forma, sus reglas o su workflow | Build de imágenes |
 | Instalar **un** catálogo y cargarle registros | `lkfaddons install -m <mod>` sin `-i` (todo el módulo) |
-| Correr una migración de un módulo | `-y` en `lkfaddons` (también carga data y demo) |
+| Instalar scripts y reportes de un módulo (`-i scripts`, `-i scripts reports`) | `-y` en `lkfaddons` (también carga data y demo) |
+| Correr una migración de un módulo | |
 | Editar un registro por API, con respaldo | `$set` directo en Mongo sin acordarlo antes |
 | Commit y push en la rama de la cuenta en `modules` | Commit a `master` de `addons` o de `modules` |
 
