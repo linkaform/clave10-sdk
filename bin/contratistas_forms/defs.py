@@ -396,3 +396,26 @@ FORMS = [
         ],
     ),
 ]
+
+
+# Campos nuevos en formas EXISTENTES (no se generan completas: se agrega una
+# página al XML que ya vive en addons, sin tocar sus campos).
+EXTENSIONS = [
+    dict(
+        slug="empleados",
+        xml="employee/items/forms/RecursosHumanos/empleados.xml",
+        page="Contratista",
+        fields=[
+            REF("empresa", "Empresa contratista",
+                help="Id del registro de Empresas; vacío = empresa propia. Lo llena Clave10."),
+            T("registro_patronal", "Registro patronal (NRP)"),
+            DEC("salario_base_cotizacion", "Salario base de cotización"),
+            DATE("alta_imss", "Alta ante el IMSS"),
+            REFLIST("perfiles", "Perfiles"),
+            YN("disponible_para_contratos", "Disponible para contratos"),
+            DATE("vetado_fecha", "Vetado · fecha"),
+            TA("vetado_motivo", "Vetado · motivo"),
+            T("vetado_por", "Vetado · por"),
+        ],
+    ),
+]

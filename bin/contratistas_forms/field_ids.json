@@ -322,5 +322,19 @@
     "cancelada": "f222bd84060d33fe5ebafa69",
     "motivo_cancelacion": "5d0de1b5deeb2838a9da3a9f",
     "estatus": "a4b8178b597fabe02583499e"
+  },
+  "empleados": {
+    "empresa_id": "7fc28a60ba83bb4750c184ac",
+    "empresa": "4bcb671c8a7a15a7b34d093f",
+    "registro_patronal": "e4de65097fb5f566d76c387b",
+    "salario_base_cotizacion": "ddd93e2581411fab91cc4443",
+    "alta_imss": "704bfd9a97a2ad6f3202df33",
+    "perfiles": "25d7c6c27976639d736c2e2d",
+    "perfiles_id": "2f7ebf7f303fca362cb02d04",
+    "perfiles_nombre": "b344d77cd5a6cc9eec85d051",
+    "disponible_para_contratos": "17a873ec1cc742b1fd14489a",
+    "vetado_fecha": "659d2e7b9f644245d4aba1cc",
+    "vetado_motivo": "bb41991865e7d6a86573c92d",
+    "vetado_por": "ab9072bffb9aebeebb05bae6"
   }
 }
