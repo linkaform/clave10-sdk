@@ -46,7 +46,11 @@
     "contacto_email": "5434520903d8ba4bb45896d0",
     "logo": "f6ad105d79d23c3ddf16b1f7",
     "es_propia": "e096b6461ccae231bbeb4f6a",
-    "estatus": "e961d961f11d95f9f8c7eee6"
+    "estatus": "e961d961f11d95f9f8c7eee6",
+    "perfil_registro": "5bed7c99d22d5661c0eacfc9",
+    "dominio": "f9fd9168da076dc447360b04",
+    "terminos_aceptados_fecha": "fb81008a9efe77851fcf90d8",
+    "terminos_version": "72e63d3a84d3b3b676ee3219"
   },
   "relaciones_entre_empresas": {
     "folio": "8a8c1c5e87def69561bb8b06",
