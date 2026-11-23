@@ -20,7 +20,7 @@ import unicodedata
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(__file__))
-from defs import FORMS, flat  # noqa: E402
+from defs import EXTENSIONS, FORMS, flat  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))  # clave10-sdk
@@ -119,7 +119,8 @@ def make_item(tpl, f, field_id, group_id=None, children_ids=None):
     return it
 
 
-def build_form(spec, tpl, ids):
+def build_items(spec, tpl, ids):
+    """Items de campo de spec['fields'] (grupos seguidos de sus hijos) y claves usadas."""
     form_ids = ids.setdefault(spec["slug"], {})
 
     def fid(key):
@@ -127,11 +128,7 @@ def build_form(spec, tpl, ids):
             form_ids[key] = new_id()
         return form_ids[key]
 
-    header = ET.parse(HEADER_SRC).getroot()
-    page_fields = header.find("form_pages/item/page_fields")
-    for c in list(page_fields):
-        page_fields.remove(c)
-    seen = set()
+    items, seen = [], set()
 
     def check(key):
         if key in seen:
@@ -146,14 +143,58 @@ def build_form(spec, tpl, ids):
             for ch in f["children"]:
                 check(ch["key"])
                 child_ids.append(fid(ch["key"]))
-            page_fields.append(make_item(tpl, f, gid, children_ids=child_ids))
+            items.append(make_item(tpl, f, gid, children_ids=child_ids))
             for ch, cid in zip(f["children"], child_ids):
-                page_fields.append(make_item(tpl, ch, cid, group_id=gid))
+                items.append(make_item(tpl, ch, cid, group_id=gid))
         else:
-            page_fields.append(make_item(tpl, f, fid(f["key"])))
+            items.append(make_item(tpl, f, fid(f["key"])))
+    return items, [k for k in form_ids if k in seen]
 
+
+def build_form(spec, tpl, ids):
+    header = ET.parse(HEADER_SRC).getroot()
+    page_fields = header.find("form_pages/item/page_fields")
+    for c in list(page_fields):
+        page_fields.remove(c)
+    items, keys = build_items(spec, tpl, ids)
+    page_fields.extend(items)
     set_simple(header, "name", spec["name"])
-    return header, [k for k in form_ids if k in seen]
+    return header, keys
+
+
+PAGE_OPEN = "        <item>\n            <page_description>None</page_description>\n"
+
+
+def extend_form(spec, tpl, ids, now):
+    """Agrega (o reemplaza) la página spec['page'] al final del XML existente.
+
+    Trabaja sobre el texto para no reformatear el resto del archivo. Regresa
+    (texto, claves, estado)."""
+    path = f"{ROOT}/addons/lkf_addons/addons/{spec['xml']}"
+    old = open(path).read()
+    base = old
+    marker = f"<page_name>{spec['page']}</page_name>"
+    if marker in base:
+        end = base.index("</item>\n", base.index(marker)) + len("</item>\n")
+        start = base.rindex(PAGE_OPEN, 0, base.index(marker))
+        base = base[:start] + base[end:]
+    items, keys = build_items(spec, tpl, ids)
+    page = ET.Element("item")
+    ET.SubElement(page, "page_description").text = "None"
+    pf = ET.SubElement(page, "page_fields")
+    pf.extend(items)
+    ET.SubElement(page, "page_name").text = spec["page"]
+    ET.SubElement(page, "page_type").text = "fields"
+    ET.indent(page, space="    ", level=2)
+    page_txt = "    " * 2 + ET.tostring(page, encoding="unicode").rstrip() + "\n"
+    i = base.index("    </form_pages>")
+    body = base[:i] + page_txt + base[i:]
+    norm = lambda s: re.sub(r"<(description|updated_at)>.*?</\1>", "", s)
+    if norm(old) == norm(body):
+        return path, old, keys, "sin cambios"
+    body = with_version(body, now)
+    body = re.sub(r"<updated_at>.*?</updated_at>", f"<updated_at>{now}.0</updated_at>", body, count=1)
+    return path, body, keys, "cambió"
 
 
 def serialize(root):
@@ -205,6 +246,16 @@ def main():
         for k in keys:
             v = ids[spec["slug"]][k]
             snippet.append(f"        '{k}': '{v}',")
+        snippet.append("    },")
+    for spec in EXTENSIONS:
+        path, out, keys, status = extend_form(spec, tpl, ids, now)
+        ET.fromstring(out.split("\n", 1)[1])  # well-formed
+        print(f"{spec['slug']:34} {len(keys):3} campos  {status} (página {spec['page']} en {spec['xml']})")
+        if not check_only and status != "sin cambios":
+            open(path, "w").write(out)
+        snippet.append(f"    '{spec['slug']}': {{")
+        for k in keys:
+            snippet.append(f"        '{k}': '{ids[spec['slug']][k]}',")
         snippet.append("    },")
     snippet.append("}")
     snippet.append("")
