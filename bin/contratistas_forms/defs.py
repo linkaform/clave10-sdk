@@ -184,6 +184,16 @@ FORMS = [
             TA("notas", "Notas"),
             INT("num_contratos", "Número de contratos", help="Lo calcula Clave10."),
             DEC("cumplimiento_pct", "% de cumplimiento", help="Lo calcula Clave10."),
+            # MX-03-B (2026-11-24): historial de avisos de incumplimiento al contratista.
+            GROUP("notificaciones", "Notificaciones de incumplimiento", [
+                DT("notif_fecha", "Fecha"),
+                T("notif_autor", "Enviada por"),
+                TA("notif_motivo", "Motivo"),
+                TA("notif_incumplimientos", "Incumplimientos (JSON)"),
+                T("notif_correo", "Correo"),
+                YN("notif_correo_enviado", "Correo enviado"),
+                INT("notif_portal", "Usuarios avisados en el portal"),
+            ]),
         ],
     ),
     dict(
