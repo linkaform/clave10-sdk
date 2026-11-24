@@ -369,11 +369,12 @@ FORMS = [
     dict(
         slug="sesiones_de_capacitacion",
         name="Sesiones de capacitación",
-        desc="Cursos, talleres y pláticas con temario, participantes y el requerimiento que otorgan.",
+        desc="Cursos, capacitaciones, pláticas e inducciones con temario, recursos, participantes y los requerimientos que otorgan.",
         fields=[
             T("nombre", "Nombre", req=True),
             TA("descripcion", "Descripción"),
-            SEL("tipo", "Tipo", ["Curso", "Taller", "Webinar", "Plática"], req=True),
+            # CF-03-B (2026-11-24): tipos del diseño.
+            SEL("tipo", "Tipo", ["Curso", "Capacitación", "Plática", "Inducción"], req=True),
             T("instructor", "Instructor"),
             DATE("fecha_inicio", "Fecha de inicio", req=True),
             DATE("fecha_fin", "Fecha de fin", req=True),
@@ -385,13 +386,20 @@ FORMS = [
             T("enlace", "Enlace"),
             REFLIST("areas", "Áreas"),
             INT("cupo", "Cupo"),
-            REF("examen", "Examen"),
-            REF("otorga", "Requerimiento que otorga"),
+            # CF-03-B: varios exámenes y varios requerimientos otorgados (diseño).
+            REFLIST("examenes", "Exámenes"),
+            REFLIST("otorgados", "Requerimientos que otorga"),
             GROUP("temario", "Temario", [
                 T("tema", "Tema"), T("leccion", "Lección"), INT("minutos", "Minutos"),
                 SEL("material_tipo", "Tipo de material", ["Video", "Lectura", "Presentación", "Cuestionario", "Clase en vivo"]),
                 SEL("material_origen", "Origen del material", ["Archivo", "Enlace"]),
                 FILES("material_archivo", "Archivo"), T("material_enlace", "Enlace")]),
+            # CF-03-B: materiales de apoyo de Capacitación, Plática e Inducción.
+            GROUP("recursos", "Recursos", [
+                T("recurso_nombre", "Nombre"),
+                SEL("recurso_tipo", "Tipo de material", ["Video", "Lectura", "Presentación", "Cuestionario", "Clase en vivo"]),
+                SEL("recurso_origen", "Origen", ["Archivo", "Enlace"]),
+                FILES("recurso_archivo", "Archivo"), T("recurso_enlace", "Enlace")]),
             GROUP("participantes", "Participantes", [
                 T("participante_id", "Empleado · id"), T("participante", "Empleado"),
                 TA("participante_asistencia", "Asistencia (JSON)"), DEC("participante_calificacion", "Calificación"),

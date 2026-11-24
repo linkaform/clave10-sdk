@@ -325,7 +325,19 @@
     "participante_resultado": "339725d966e7235aafa0ca72",
     "cancelada": "f222bd84060d33fe5ebafa69",
     "motivo_cancelacion": "5d0de1b5deeb2838a9da3a9f",
-    "estatus": "a4b8178b597fabe02583499e"
+    "estatus": "a4b8178b597fabe02583499e",
+    "examenes": "319f1f46e150339c87e06b07",
+    "examenes_id": "7a6f757471f5910244e80205",
+    "examenes_nombre": "6a7dfb61340b8e9d501c8d0e",
+    "otorgados": "e413cad0fd6025b7f174d1b5",
+    "otorgados_id": "68302f1c9768e46398c74bbc",
+    "otorgados_nombre": "3ba2a983f688dc02fbb14245",
+    "recursos": "fa37730c215bbf71acbac7d8",
+    "recurso_nombre": "a7bf384fdb17e24884024f88",
+    "recurso_tipo": "c05aabb5ca7427707f4a520b",
+    "recurso_origen": "4a505a94001b8be5e65e0c80",
+    "recurso_archivo": "be724dfef5062bacfe0ec52e",
+    "recurso_enlace": "cf662695b8a5577a322d5a62"
   },
   "empleados": {
     "empresa_id": "7fc28a60ba83bb4750c184ac",
