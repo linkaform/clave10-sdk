@@ -359,5 +359,35 @@
     "notificaciones_correo": "e9cab4cc868c6f7e43243ff5",
     "acceso_app": "e941b7be581cd6e6cc3a3d94",
     "checkin_foto": "d8f913f2b71d88747ef7c559"
+  },
+  "mantenimientos_de_activos": {
+    "folio": "c205458be76769e4e5943536",
+    "activo_id": "864508cc058d5b3128bbe4dc",
+    "activo": "be530d25a0bd1338444e5341",
+    "empresa_id": "418f26b6c46e484869c0d9aa",
+    "empresa": "ed91e51c9412eba07307e3a7",
+    "asignado_id": "3c1918a2f83f64822831f156",
+    "asignado": "5cd7607d53050406b2d07a65",
+    "prioridad": "65af31270fe32c1564c12c95",
+    "fecha_limite": "4f00e9390a9948dba078a9ac",
+    "descripcion": "bda70f161a846e530a42b8b5",
+    "estatus": "8342a5e4bba9051591de0495",
+    "fecha_cierre": "01edfa47ee9a473577e437e7",
+    "historial": "d9a463155a09377d6b42426c",
+    "historial_estatus": "c2a0292582faf83921e24ee7",
+    "historial_comentario": "9c3ad1843767dacde7d391b0",
+    "historial_evidencias": "8d99c5f394a1309b3e932e18",
+    "historial_autor": "0a032095e295f0f5325eb07a",
+    "historial_fecha": "3ccc406186de957d89387bad"
+  },
+  "activos_fijos": {
+    "empresa_id": "3e7364c49d9abac1bd63b929",
+    "empresa": "54534f6b7e9fd8f573a70cba",
+    "folio": "6849dfc84d5569d48ff12bcf",
+    "clase": "b07ae90f39313783f80da55b",
+    "cantidad": "6d39a72faa2e5911753c9284",
+    "asignado_id": "7fb6f1e82982adad9107f5e1",
+    "asignado": "fb9b7921bea5b02f5fab8a00",
+    "lectura_ia": "0b2a8a8f7829e3f0b2170009"
   }
 }
