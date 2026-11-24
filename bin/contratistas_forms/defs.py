@@ -452,6 +452,42 @@ FORMS.append(
 )
 
 
+# R-07 (2026-11-24): sanciones a un empleado (diseño de ME-05) o a la empresa
+# contratista ("Nueva Sanción" de Contratistas). Estatus Vigente/Cumplida se
+# calcula; se guarda para poder filtrar en LinkaForm.
+FORMS.append(
+    dict(
+        slug="sanciones",
+        name="Sanciones",
+        desc="Sanciones a empleados o a empresas contratistas, con suspensión de acceso, comentarios, evidencias y acta.",
+        fields=[
+            T("folio", "Folio", help="S-0001; lo pone Clave10."),
+            SEL("sujeto_tipo", "Sancionado", ["Empleado", "Empresa"], req=True),
+            REF("empleado", "Empleado", help="Id del registro de Empleados si el sancionado es un empleado."),
+            REF("empresa", "Empresa sancionada", req=True, help="La empresa del empleado o la contratista sancionada."),
+            REF("registra", "Empresa que registra", req=True),
+            REF("relacion", "Relación", help="Vacío = sanción interna de la empresa a su propio empleado."),
+            REF("contrato", "Contrato"),
+            SEL("motivo", "Motivo", ["Retardos", "Falta injustificada", "No portar EPP", "Abandono de puesto",
+                                     "Incumplimiento de procedimiento", "Conducta inapropiada", "Otro"], req=True),
+            T("motivo_otro", "Otro motivo"),
+            DATE("fecha", "Fecha", req=True),
+            YN("sin_acceso", "Sin días de acceso"),
+            INT("dias_sin_acceso", "Días sin acceso", help="1 a 8 (Ley Federal del Trabajo)."),
+            DATE("inicio_suspension", "Inicio de la suspensión"),
+            DATE("fin_suspension", "Fin de la suspensión", help="Lo calcula Clave10."),
+            T("registro", "Registró"),
+            FILES("acta", "Acta"),
+            GROUP("comentarios", "Comentarios y evidencias", [
+                T("comentario_autor", "Autor"), DT("comentario_fecha", "Fecha"), TA("comentario_texto", "Comentario"),
+                FILES("comentario_evidencias", "Evidencias"),
+            ]),
+            SEL("estatus", "Estatus", ["Vigente", "Cumplida"], help="Lo calcula Clave10."),
+        ],
+    )
+)
+
+
 # Campos nuevos en formas EXISTENTES (no se generan completas: se agrega una
 # página al XML que ya vive en addons, sin tocar sus campos).
 EXTENSIONS = [
