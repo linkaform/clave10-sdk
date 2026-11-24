@@ -339,6 +339,9 @@
     "disponible_para_contratos": "17a873ec1cc742b1fd14489a",
     "vetado_fecha": "659d2e7b9f644245d4aba1cc",
     "vetado_motivo": "bb41991865e7d6a86573c92d",
-    "vetado_por": "ab9072bffb9aebeebb05bae6"
+    "vetado_por": "ab9072bffb9aebeebb05bae6",
+    "folio": "12e0db04b533d8ba5322c44f",
+    "centro_trabajo_id": "dccb4299347e699d854e5567",
+    "centro_trabajo": "921b3fd9a92dcec57891ac16"
   }
 }
