@@ -414,6 +414,34 @@ FORMS = [
 ]
 
 
+# ME-08-B (2026-11-24): mantenimientos de los activos (forma activos_fijos).
+FORMS.append(
+    dict(
+        slug="mantenimientos_de_activos",
+        name="Mantenimientos de activos",
+        desc="Mantenimientos programados de los activos de una empresa, con su historial de estatus, comentarios y evidencias.",
+        fields=[
+            T("folio", "Folio", help="M-0001; lo pone Clave10."),
+            REF("activo", "Activo", req=True, help="Id del registro de Activos Fijos. Lo llena Clave10."),
+            REF("empresa", "Empresa", req=True),
+            REF("asignado", "Asignado a", req=True, help="Id del registro de Empleados. Lo llena Clave10."),
+            SEL("prioridad", "Prioridad", ["Alta", "Media", "Baja"], req=True),
+            DATE("fecha_limite", "Fecha límite", req=True),
+            TA("descripcion", "Descripción"),
+            SEL("estatus", "Estatus", ["Abierta", "En proceso", "Cerrada"], req=True),
+            DT("fecha_cierre", "Fecha de cierre"),
+            GROUP("historial", "Historial", [
+                SEL("historial_estatus", "Estatus", ["Abierta", "En proceso", "Cerrada"]),
+                TA("historial_comentario", "Comentario"),
+                FILES("historial_evidencias", "Evidencias"),
+                T("historial_autor", "Autor"),
+                DT("historial_fecha", "Fecha"),
+            ]),
+        ],
+    )
+)
+
+
 # Campos nuevos en formas EXISTENTES (no se generan completas: se agrega una
 # página al XML que ya vive en addons, sin tocar sus campos).
 EXTENSIONS = [
@@ -440,6 +468,21 @@ EXTENSIONS = [
             YN("notificaciones_correo", "Notificaciones por correo"),
             YN("acceso_app", "Acceso a la app móvil"),
             YN("checkin_foto", "Check In con fotografía"),
+        ],
+    ),
+    # ME-08-B (2026-11-24): activos de la empresa sobre la forma existente de
+    # Activo_Fijo (la lee Concesiones). Solo lo que no tenía la forma.
+    dict(
+        slug="activos_fijos",
+        xml="activo_fijo/items/forms/ActivoFijo/activos_fijos.xml",
+        page="Contratista",
+        fields=[
+            REF("empresa", "Empresa", help="Id del registro de Empresas dueña del activo. Lo llena Clave10."),
+            T("folio", "Folio", help="A-0001; lo pone Clave10."),
+            SEL("clase", "Tipo de activo", ["Vehículo", "Equipo", "Herramienta"]),
+            INT("cantidad", "Cantidad en existencia", help="Solo herramientas con inventario Stock."),
+            REF("asignado", "Asignado a", help="Id del registro de Empleados. Lo llena Clave10."),
+            TA("lectura_ia", "Lectura de la foto con IA (JSON)"),
         ],
     ),
 ]
