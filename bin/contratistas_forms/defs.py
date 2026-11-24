@@ -403,7 +403,9 @@ FORMS = [
             GROUP("participantes", "Participantes", [
                 T("participante_id", "Empleado · id"), T("participante", "Empleado"),
                 TA("participante_asistencia", "Asistencia (JSON)"), DEC("participante_calificacion", "Calificación"),
-                SEL("participante_resultado", "Resultado", ["Aprobado", "No aprobado"])]),
+                SEL("participante_resultado", "Resultado", ["Aprobado", "No aprobado"]),
+                # CF-04-B (2026-11-24): una calificación por examen (varios exámenes por sesión).
+                TA("participante_calificaciones", "Calificaciones por examen (JSON)")]),
             YN("cancelada", "Cancelada"),
             TA("motivo_cancelacion", "Motivo de cancelación"),
             SEL("estatus", "Estatus", ["Programada", "En curso", "Finalizada", "Cancelada"], help="Lo calcula Clave10."),
