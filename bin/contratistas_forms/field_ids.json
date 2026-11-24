@@ -133,7 +133,8 @@
     "examen_vigencia_resultado_n": "874e006ac603b7ae0d98b278",
     "examen_vigencia_resultado_unidad": "c4f255298de247b39c1634eb",
     "inspeccion": "9c4f8863c2025bcbbccd8555",
-    "estatus": "f51edfd508add77cb08c944c"
+    "estatus": "f51edfd508add77cb08c944c",
+    "codigo": "34ed4b19bacc09b5e3a8de09"
   },
   "contratos_de_servicio": {
     "folio": "c5d4a40a0f74201ba0ed4b55",
@@ -198,7 +199,13 @@
     "cumplimiento_pct": "b687fe6af3d0544202d70cfd",
     "cumplimiento_contrato_pct": "4d28afa06cc56a0cc533789f",
     "cumplimiento_empleados_pct": "a299545362330f8ad9cf6b7f",
-    "cumplimiento_periodicos_pct": "d3a338f34d9de824bc03a9ce"
+    "cumplimiento_periodicos_pct": "d3a338f34d9de824bc03a9ce",
+    "mapeo": "ca1ed50c74ed0067354724e4",
+    "mapeo_origen": "8fb697846389b2a2bc354457",
+    "mapeo_nivel": "dee8ce166ef024dc3f0d3c85",
+    "mapeo_requerimiento_id": "7f81e3534d388673968de2d0",
+    "mapeo_requerimiento": "54a7ffb115f8b331b63da20d",
+    "mapeo_similitud": "7c921a052ba7c9053d5a2ee2"
   },
   "historial_de_contratos": {
     "contrato_id": "3326b75d90d65a0bd3a2fcb1",
