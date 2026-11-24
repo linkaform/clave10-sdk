@@ -422,6 +422,10 @@ EXTENSIONS = [
             DATE("vetado_fecha", "Vetado · fecha"),
             TA("vetado_motivo", "Vetado · motivo"),
             T("vetado_por", "Vetado · por"),
+            # ME-03-B (2026-11-24): al final para no mover los ids de arriba.
+            T("folio", "Folio", help="E-0001; lo pone Clave10."),
+            REF("centro_trabajo", "Centro de trabajo",
+                help="Id de la ubicación de la empresa (ME-02). Lo llena Clave10."),
         ],
     ),
 ]
