@@ -68,7 +68,15 @@
     "fecha_alta": "c0f15083995ec41e353ac020",
     "notas": "eeb235de0d4f905a56b519a3",
     "num_contratos": "09c2491e53f6326b236f9352",
-    "cumplimiento_pct": "55ef6b84ca24f3617f96531c"
+    "cumplimiento_pct": "55ef6b84ca24f3617f96531c",
+    "notificaciones": "9eb374a8f34403758d4246c0",
+    "notif_fecha": "73ff9b3ff7edded95c457bef",
+    "notif_autor": "f2ac452762c22267bc51eeda",
+    "notif_motivo": "9f6dee4ff6f32d68f63166b3",
+    "notif_incumplimientos": "b19d0824fc07e24257b77b83",
+    "notif_correo": "ea4113e890ba365d77b59881",
+    "notif_correo_enviado": "7272ce8e851b30bdbb21b8d2",
+    "notif_portal": "39893d28cea522d74464e114"
   },
   "recursos_de_contrato": {
     "tipo": "2ef724862ad02a11e346df52",
