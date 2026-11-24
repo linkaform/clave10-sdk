@@ -426,6 +426,10 @@ EXTENSIONS = [
             T("folio", "Folio", help="E-0001; lo pone Clave10."),
             REF("centro_trabajo", "Centro de trabajo",
                 help="Id de la ubicación de la empresa (ME-02). Lo llena Clave10."),
+            # ME-04-B (2026-11-24): preferencias de Configuraciones (sin efecto todavía).
+            YN("notificaciones_correo", "Notificaciones por correo"),
+            YN("acceso_app", "Acceso a la app móvil"),
+            YN("checkin_foto", "Check In con fotografía"),
         ],
     ),
 ]
