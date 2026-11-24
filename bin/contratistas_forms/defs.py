@@ -248,6 +248,8 @@ FORMS = [
             SEL("examen_vigencia_resultado_unidad", "Examen · vigencia del resultado (unidad)", ["días", "meses", "años"]),
             T("inspeccion", "Inspección"),
             SEL("estatus", "Estatus", ESTATUS, req=True),
+            # ME-13 (2026-11-24): código de sistema del catálogo maestro (mayúsculas, único).
+            T("codigo", "Código", help="Mayúsculas, máximo 24 caracteres, único en la cuenta."),
         ],
     ),
     dict(
@@ -294,6 +296,14 @@ FORMS = [
             DEC("cumplimiento_contrato_pct", "% cumplimiento · contrato"),
             DEC("cumplimiento_empleados_pct", "% cumplimiento · empleados"),
             DEC("cumplimiento_periodicos_pct", "% cumplimiento · periódicos"),
+            # ME-13 (2026-11-24): homologación de lo que el cliente escribió contra el catálogo.
+            GROUP("mapeo", "Mapeo de requerimientos", [
+                T("mapeo_origen", "Texto del cliente"),
+                SEL("mapeo_nivel", "Nivel", ["Empresa", "Persona", "Equipo"]),
+                T("mapeo_requerimiento_id", "Requerimiento · id"),
+                T("mapeo_requerimiento", "Requerimiento"),
+                DEC("mapeo_similitud", "% de coincidencia"),
+            ]),
         ],
     ),
     dict(
